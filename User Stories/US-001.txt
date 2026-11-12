@@ -1,0 +1,8 @@
+US-001
+Als engineer wil ik een troubleshooting flow kunnen doorlopen zodat ik stap voor stap een diagnose kan uitvoeren.
+Acceptatiecriteria
+ kennis wordt vanuit JSON geladen
+ root-node verschijnt
+ antwoord klikken navigeert
+ volgende node wordt getoond
+ geen hardcoded vragen in App.tsx

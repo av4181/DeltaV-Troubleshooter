@@ -1,0 +1,3 @@
+User Story US-004
+Breadcrumb Trail
+Als engineer wil ik zien welke diagnoseweg ik heb afgelegd zodat ik mijn redenering kan volgen.

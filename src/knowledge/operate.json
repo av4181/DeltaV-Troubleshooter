@@ -1,0 +1,95 @@
+{
+  "root": {
+    "id": "root",
+    "type": "question",
+    "title": "What is the primary symptom?",
+    "answers": [
+      {
+        "label": "Controller Fault",
+        "next": "controller_fault"
+      },
+      {
+        "label": "I/O Bad Status",
+        "next": "io_bad"
+      },
+      {
+        "label": "Communication Issue",
+        "next": "comm_issue"
+      }
+    ]
+  },
+
+  "controller_fault": {
+    "id": "controller_fault",
+    "type": "question",
+    "title": "Is the controller redundant?",
+    "answers": [
+      {
+        "label": "Yes",
+        "next": "redundant_controller"
+      },
+      {
+        "label": "No",
+        "next": "single_controller"
+      }
+    ]
+  },
+
+  "redundant_controller": {
+    "id": "redundant_controller",
+    "type": "info",
+    "domain": "Controller",
+    "riskLevel": "Read Only",
+    "title": "Investigate Redundant Controller",
+    "description": "Review redundancy diagnostics and controller event history.",
+    "actions": [
+      "Check controller diagnostics",
+      "Review Event Chronicle",
+      "Verify standby controller status",
+      "Review recent downloads"
+    ]
+  },
+
+  "single_controller": {
+    "id": "single_controller",
+    "type": "info",
+    "domain": "Controller",
+    "riskLevel": "Controlled Impact",
+    "title": "Investigate Single Controller",
+    "description": "Verify controller health and resource loading.",
+    "actions": [
+      "Check CPU utilization",
+      "Inspect diagnostics",
+      "Check module execution overruns"
+    ]
+  },
+
+  "io_bad": {
+    "id": "io_bad",
+    "type": "info",
+    "domain": "I/O",
+    "riskLevel": "Read Only",
+    "title": "Bad I/O Status Detected",
+    "description": "Determine whether the issue originates from field wiring, CHARMs, power, or carrier communication.",
+    "actions": [
+      "Verify channel diagnostics",
+      "Verify CHARM health",
+      "Check carrier power",
+      "Inspect field wiring"
+    ]
+  },
+
+  "comm_issue": {
+    "id": "comm_issue",
+    "type": "info",
+    "domain": "Network",
+    "riskLevel": "Read Only",
+    "title": "Communication Issue",
+    "description": "Review DeltaV network health before intervention.",
+    "actions": [
+      "Review network diagnostics",
+      "Check switch alarms",
+      "Verify controller communication statistics"
+    ]
+  }
+}
