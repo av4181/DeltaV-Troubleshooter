@@ -1,4 +1,2 @@
-export interface Answer {
-  label: string;
-  next: string;
-}
+// Type is inferred from the Zod schema in ./schema.ts (single source of truth).
+export type { Answer } from "./schema.ts";

@@ -1,3 +1,1 @@
-import type { Node } from "../models/Node";
-
-export type KnowledgeBase = Record<string, Node>;
+export type { KnowledgeBase } from "../models/schema.ts";

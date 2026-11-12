@@ -11,7 +11,7 @@ export class DecisionEngine {
     this.knowledge = knowledge;
   }
 
-  getCurrentNode(): Node {
+  getCurrentNode(): Node | undefined {
     return this.knowledge[this.currentNodeId];
   }
 

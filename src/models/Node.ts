@@ -1,19 +1,17 @@
-import type { Answer } from "./Answer";
+// Types are inferred from the Zod schema in ./schema.ts (single source of truth).
+export type {
+  Node,
+  Layer,
+  Mechanism,
+  Domain,
+  RiskLevel,
+  Variant,
+} from "./schema.ts";
 
-export interface Node {
-  id: string;
-
-  type: "question" | "info";
-
-  title: string;
-
-  domain?: string;
-
-  description?: string;
-
-  riskLevel?: "Read Only" | "Controlled Impact" | "Disruptive";
-
-  actions?: string[];
-
-  answers?: Answer[];
-}
+export {
+  LAYERS,
+  MECHANISMS,
+  DOMAINS,
+  RISK_LEVELS,
+  VARIANTS,
+} from "./schema.ts";

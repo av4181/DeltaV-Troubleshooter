@@ -18,7 +18,6 @@
       }
     ]
   },
-
   "controller_fault": {
     "id": "controller_fault",
     "type": "question",
@@ -34,10 +33,9 @@
       }
     ]
   },
-
   "redundant_controller": {
     "id": "redundant_controller",
-    "type": "info",
+    "type": "terminal",
     "domain": "Controller",
     "riskLevel": "Read Only",
     "title": "Investigate Redundant Controller",
@@ -49,10 +47,9 @@
       "Review recent downloads"
     ]
   },
-
   "single_controller": {
     "id": "single_controller",
-    "type": "info",
+    "type": "terminal",
     "domain": "Controller",
     "riskLevel": "Controlled Impact",
     "title": "Investigate Single Controller",
@@ -63,10 +60,9 @@
       "Check module execution overruns"
     ]
   },
-
   "io_bad": {
     "id": "io_bad",
-    "type": "info",
+    "type": "terminal",
     "domain": "I/O",
     "riskLevel": "Read Only",
     "title": "Bad I/O Status Detected",
@@ -78,10 +74,9 @@
       "Inspect field wiring"
     ]
   },
-
   "comm_issue": {
     "id": "comm_issue",
-    "type": "info",
+    "type": "terminal",
     "domain": "Network",
     "riskLevel": "Read Only",
     "title": "Communication Issue",
