@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { formatIssue, validateKnowledge } from "../src/knowledge/validate.ts";
+import { validateHypotheses } from "../src/hypotheses/validate.ts";
 
 const KNOWLEDGE_DIR = join(import.meta.dirname, "..", "src", "knowledge");
 const strict = process.argv.includes("--strict");
@@ -36,6 +37,28 @@ for (const file of files) {
   }
 
   if (result.ok) console.log(`${file}: ${nodeCount} nodes OK`);
+}
+
+const HYPOTHESES_DIR = join(KNOWLEDGE_DIR, "hypotheses");
+for (const file of readdirSync(HYPOTHESES_DIR).filter((name) => name.endsWith(".json"))) {
+  const label = `hypotheses/${file}`;
+  let raw: unknown;
+  try {
+    raw = JSON.parse(readFileSync(join(HYPOTHESES_DIR, file), "utf-8"));
+  } catch (error) {
+    console.error(`${label}: not valid JSON - ${(error as Error).message}`);
+    errors++;
+    continue;
+  }
+  const result = validateHypotheses(raw);
+  for (const issue of result.issues) {
+    console.error(`${label}: ${formatIssue(issue)}`);
+    if (issue.severity === "error") errors++;
+    else warnings++;
+  }
+  if (result.data) {
+    console.log(`${label}: ${result.data.hypotheses.length} hypotheses, ${result.data.observations.length} observations OK`);
+  }
 }
 
 console.log(`\n${errors} error(s), ${warnings} warning(s)`);

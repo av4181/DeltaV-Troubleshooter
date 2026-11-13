@@ -5,6 +5,11 @@
     "title": "What is the primary symptom?",
     "answers": [
       {
+        "label": "DeltaV Operate (operator display) problem",
+        "next": "operate.symptom",
+        "sub": "NK-1000-0176"
+      },
+      {
         "label": "Controller Fault",
         "next": "controller_fault"
       },
@@ -85,6 +90,1077 @@
       "Review network diagnostics",
       "Check switch alarms",
       "Verify controller communication statistics"
+    ]
+  },
+  "operate.symptom": {
+    "id": "operate.symptom",
+    "type": "question",
+    "title": "What is DeltaV Operate doing?",
+    "domain": "Operate",
+    "description": "Pick the closest symptom. The categories follow section 8 of NK-1000-0176.",
+    "layer": "application",
+    "sources": [
+      "NK-1000-0176 §8"
+    ],
+    "answers": [
+      {
+        "label": "Operate closes or Workspace.exe terminates",
+        "next": "operate.crash.identify",
+        "sub": "§8.1"
+      },
+      {
+        "label": "Operate is slow or sluggish",
+        "next": "operate.slow.cpu",
+        "sub": "§8.2"
+      },
+      {
+        "label": "Operate is frozen but Windows is still usable",
+        "next": "operate.partial.check",
+        "sub": "§8.3"
+      },
+      {
+        "label": "Whole workstation freezes, blue screen or out of memory",
+        "next": "operate.total.collect",
+        "sub": "§8.4"
+      },
+      {
+        "label": "Datalinks or animations show wrong values or &&&& / @@@@ / magenta",
+        "next": "operate.data.scope",
+        "sub": "§8.5"
+      },
+      {
+        "label": "Problems with multiple monitors",
+        "next": "operate.multimon.collect",
+        "sub": "§8.6"
+      },
+      {
+        "label": "No fault, review configuration against best practices",
+        "next": "operate.config",
+        "sub": "§2-§7"
+      }
+    ]
+  },
+  "operate.crash.identify": {
+    "id": "operate.crash.identify",
+    "type": "checklist",
+    "title": "Confirm it is a Workspace.exe termination",
+    "domain": "Operate",
+    "description": "With Windows Error Reporting enabled the screen looks frozen (mouse moves, Alt-Tab works, datalinks stop). With it disabled Operate simply closes.",
+    "layer": "application",
+    "riskLevel": "Read Only",
+    "sources": [
+      "NK-1000-0176 §8.1.1-8.1.2"
+    ],
+    "items": [
+      "Find the faulting module in the Windows Event Log, the Dr. Watson log (XP/2003) or Workspace.dmp",
+      "Write down what the operator did just before it happened",
+      "Check the Software Updates KBA of your DeltaV version for a known Workspace termination hotfix"
+    ],
+    "next": "operate.crash.module",
+    "nextLabel": "I have the faulting module"
+  },
+  "operate.crash.module": {
+    "id": "operate.crash.module",
+    "type": "question",
+    "title": "Which faulting module or pattern matches?",
+    "domain": "Operate",
+    "description": "The hotfix KBA table in §8.1.3 is not applicable on v13.3.1 and later; check the Software Updates KBA instead.",
+    "layer": "application",
+    "sources": [
+      "NK-1000-0176 §8.1.3-8.1.4"
+    ],
+    "answers": [
+      {
+        "label": "FixTagGroupdll or FixComponentDll",
+        "next": "operate.crash.dumpdatasources",
+        "sub": "AP-0800-0053"
+      },
+      {
+        "label": "oleaut32.dll with a Date and Time field in an open graphic",
+        "next": "operate.crash.datetime",
+        "sub": "AP-0800-0033"
+      },
+      {
+        "label": "DVSYS.exe with bss.dll while opening and closing pictures",
+        "next": "operate.crash.dvsys_bss",
+        "sub": "NK-1600-0190"
+      },
+      {
+        "label": "Something else, or no dump available",
+        "next": "operate.crash.unknown"
+      }
+    ]
+  },
+  "operate.crash.dumpdatasources": {
+    "id": "operate.crash.dumpdatasources",
+    "type": "terminal",
+    "title": "Run the DumpDataSources utility",
+    "domain": "Operate",
+    "description": "Picture issues caused by the configuration mistakes in section 2 can crash Workspace. The utility finds them. Fix everything it reports before deploying the pictures. Applies to v8.4.x to v15.LTS.",
+    "layer": "application",
+    "mechanism": "activex-ole",
+    "riskLevel": "Controlled Impact",
+    "actions": [
+      "Follow AP-0800-0053 to run DumpDataSources on the affected pictures",
+      "Correct every reported issue",
+      "Compare the pictures against the checklist in the configuration review"
+    ],
+    "sources": [
+      "NK-1000-0176 §2.2.h, §8.1.4",
+      "AP-0800-0053"
+    ]
+  },
+  "operate.crash.datetime": {
+    "id": "operate.crash.datetime",
+    "type": "terminal",
+    "title": "Date and Time field in an open graphic",
+    "domain": "Operate",
+    "description": "Operate Run may terminate suddenly when a Date and Time field is in any open graphic, faulting in oleaut32.dll. Listed for v7.3, v7.4.x, v8.3, v8.4.x and v9.3, so it is unlikely on current versions.",
+    "layer": "application",
+    "mechanism": "activex-ole",
+    "riskLevel": "Read Only",
+    "actions": [
+      "Check whether the picture contains a Date and Time control",
+      "Follow AP-0800-0033 for the workaround"
+    ],
+    "sources": [
+      "NK-1000-0176 §8.1.4",
+      "AP-0800-0033"
+    ]
+  },
+  "operate.crash.dvsys_bss": {
+    "id": "operate.crash.dvsys_bss",
+    "type": "terminal",
+    "title": "DVSYS.exe terminates with bss.dll",
+    "domain": "Operate",
+    "description": "Known issue with a hotfix (TFS236655) for v12.3.1 and v13.3. The hotfix KBAs in the guide do not apply to v13.3.1 and later.",
+    "layer": "application",
+    "riskLevel": "Controlled Impact",
+    "actions": [
+      "Check the Software Updates KBA of your version for TFS236655",
+      "Install the workstation hotfix if applicable"
+    ],
+    "sources": [
+      "NK-1000-0176 §8.1.3",
+      "NK-1600-0190"
+    ]
+  },
+  "operate.crash.unknown": {
+    "id": "operate.crash.unknown",
+    "type": "checklist",
+    "title": "Set up crash capture and collect evidence",
+    "domain": "Operate",
+    "description": "Make sure the next crash leaves usable data and does not hang on a dialog.",
+    "layer": "application",
+    "mechanism": "windows-os",
+    "riskLevel": "Controlled Impact",
+    "items": [
+      "Disable Windows Error Reporting UI: add DWORD DontShowUI=1 under HKLM\\Software\\Microsoft\\Windows\\Windows Error Reporting",
+      "Create full crash dumps: under ...\\Windows Error Reporting\\LocalDumps set DumpType=2 and DumpFolder=C:\\Users\\Public\\Dumps",
+      "v13.3.1 and later already ship with full dumps enabled",
+      "Write down the sequence of events leading to the crash",
+      "Run the DeltaV Data Collector (DDC)"
+    ],
+    "sources": [
+      "NK-1000-0176 §3.f-3.g, §8.1.2"
+    ],
+    "next": "operate.escalate",
+    "nextLabel": "Prepare escalation"
+  },
+  "operate.slow.cpu": {
+    "id": "operate.slow.cpu",
+    "type": "step",
+    "title": "Check CPU and memory usage",
+    "domain": "Operate",
+    "description": "In Task Manager check Workspace.exe and DVSYS.exe. Mind the core count: on a dual core, 50% is full usage.",
+    "layer": "application",
+    "riskLevel": "Read Only",
+    "sources": [
+      "NK-1000-0176 §8.2.2"
+    ],
+    "answers": [
+      {
+        "label": "Workspace.exe or DVSYS.exe is high",
+        "next": "operate.slow.what"
+      },
+      {
+        "label": "Another process is high on CPU or memory",
+        "next": "operate.slow.other"
+      },
+      {
+        "label": "Nothing is high, but pictures open slowly",
+        "next": "operate.slow.what"
+      }
+    ]
+  },
+  "operate.slow.other": {
+    "id": "operate.slow.other",
+    "type": "terminal",
+    "title": "Another process is the bottleneck",
+    "domain": "Operate",
+    "description": "Identify the process and whether it is DeltaV related.",
+    "layer": "application",
+    "mechanism": "windows-os",
+    "riskLevel": "Read Only",
+    "actions": [
+      "Identify the process and its owner",
+      "Check third-party software and drivers",
+      "Run the DeltaV Data Collector if it is not specific to one picture"
+    ],
+    "sources": [
+      "NK-1000-0176 §8.2.2.c"
+    ]
+  },
+  "operate.slow.what": {
+    "id": "operate.slow.what",
+    "type": "question",
+    "title": "What is slow, and when?",
+    "domain": "Operate",
+    "layer": "application",
+    "sources": [
+      "NK-1000-0176 §8.2.2"
+    ],
+    "answers": [
+      {
+        "label": "Moving between main pictures is slow",
+        "next": "operate.slow.caching",
+        "sub": "AP-0700-0058"
+      },
+      {
+        "label": "One picture is slow or has very many datalinks",
+        "next": "operate.slow.datalinks",
+        "sub": "§2.2.c-d"
+      },
+      {
+        "label": "Magenta / &&&& intermittently, DVSYS stays busy",
+        "next": "operate.slow.invalid_ds",
+        "sub": "AP-0500-0075"
+      },
+      {
+        "label": "Pictures with embedded trends freeze on a bad secondary network",
+        "next": "operate.slow.embedded_trend",
+        "sub": "NK-1400-0302"
+      },
+      {
+        "label": "A script or button takes a long time",
+        "next": "operate.slow.vba",
+        "sub": "§2.3"
+      },
+      {
+        "label": "None of these",
+        "next": "operate.escalate"
+      }
+    ]
+  },
+  "operate.slow.caching": {
+    "id": "operate.slow.caching",
+    "type": "terminal",
+    "title": "Picture caching is not configured as recommended",
+    "domain": "Operate",
+    "description": "Caching must be enabled at system level with cache size 5 or less. Main pictures get CacheEnabled=True. All popups with dynamic datasources (faceplates, details, trends, function block faceplates/details/trends) get CacheEnabled=False.",
+    "layer": "application",
+    "riskLevel": "Controlled Impact",
+    "actions": [
+      "Check the system-level cache setting and size",
+      "Check CacheEnabled on main pictures and on popups",
+      "Disable caching on pictures with many bitmaps"
+    ],
+    "sources": [
+      "NK-1000-0176 §2.1.e, §8.2.4",
+      "AP-0700-0058"
+    ]
+  },
+  "operate.slow.datalinks": {
+    "id": "operate.slow.datalinks",
+    "type": "terminal",
+    "title": "Too many datalinks or too fast refresh rate",
+    "domain": "Operate",
+    "description": "DeltaV parameters update at most once per second in DVSYS, so faster refresh only adds load. Mixing refresh rates in one picture also slows it down. Limits per picture: v9.3.1 and earlier warn at 350 and error at 600; v10.3-12.3 warn at 900 and error at 1200; v13.3 errors at 3000; v14 and later use the Datalink Counter Utility.",
+    "layer": "application",
+    "riskLevel": "Controlled Impact",
+    "actions": [
+      "Use the 'Saves a Picture (Counts datalinks)' toolbar button to count and reset refresh rates to 1 second",
+      "Avoid Data Conversion type 'Object'; use Range, Format or Table",
+      "Split large pictures"
+    ],
+    "sources": [
+      "NK-1000-0176 §2.1.a, §2.2.c-d, §2.2.i"
+    ]
+  },
+  "operate.slow.invalid_ds": {
+    "id": "operate.slow.invalid_ds",
+    "type": "terminal",
+    "title": "Invalid datasources in pictures",
+    "domain": "Operate",
+    "description": "Invalid datasources can cause high CPU, temporary lockups and intermittent &&&& / magenta. Closing Operate may take about 10 minutes for DVSYS to exit.",
+    "layer": "application",
+    "riskLevel": "Read Only",
+    "actions": [
+      "Open DVStatus.grf in Run mode and look for errors in the ADD header",
+      "Walk through all pictures and user scenarios where the datasource reference can change",
+      "Run DumpDataSources (AP-0800-0053)",
+      "Ask Technical Support for help finding the invalid datasources"
+    ],
+    "sources": [
+      "NK-1000-0176 §8.2.4, §8.5.2.3",
+      "AP-0500-0075"
+    ]
+  },
+  "operate.slow.embedded_trend": {
+    "id": "operate.slow.embedded_trend",
+    "type": "terminal",
+    "title": "Embedded trends with a bad secondary network",
+    "domain": "Operate",
+    "description": "Operate freezes when opening a picture with embedded trends while the secondary network is bad. Applies to v10.3.x-v12.3.x.",
+    "layer": "network",
+    "riskLevel": "Controlled Impact",
+    "actions": [
+      "Repair the secondary network",
+      "Delete all instances of EmbeddedTrendCtrlLib.exd as described in NK-1400-0302"
+    ],
+    "sources": [
+      "NK-1000-0176 §8.2.4",
+      "NK-1400-0302"
+    ]
+  },
+  "operate.slow.vba": {
+    "id": "operate.slow.vba",
+    "type": "terminal",
+    "title": "Long-running VBA on the UI thread",
+    "domain": "Operate",
+    "description": "VBA is single-threaded and runs on the same thread as the Operate user interface, so slow scripts block events and animation. frsReadValue is an asynchronous device read, so calling it and frsWriteValue repeatedly adds noticeable delay.",
+    "layer": "application",
+    "mechanism": "activex-ole",
+    "riskLevel": "Controlled Impact",
+    "actions": [
+      "Move long-running routines to Background Schedules",
+      "Avoid fast timers and tight loops",
+      "Do not change Object.Source rapidly at run time",
+      "Use OnTrue/OnFalse instead of DataChange for events"
+    ],
+    "sources": [
+      "NK-1000-0176 §2.3",
+      "AUS1-128-000914110905"
+    ]
+  },
+  "operate.partial.check": {
+    "id": "operate.partial.check",
+    "type": "step",
+    "title": "Confirm a partial lockup",
+    "domain": "Operate",
+    "description": "Operate shows Not Responding or a persistent 'Network Transaction is in Progress' error, a picture or faceplate will not open, but the mouse, keyboard and system clock still work and other applications can be opened.",
+    "layer": "application",
+    "riskLevel": "Read Only",
+    "sources": [
+      "NK-1000-0176 §8.3.1-8.3.2"
+    ],
+    "answers": [
+      {
+        "label": "'Network Transaction is in Progress', or node shows red X in Diagnostics",
+        "next": "operate.partial.comm"
+      },
+      {
+        "label": "It happens when one particular picture is opened",
+        "next": "operate.partial.isolate"
+      },
+      {
+        "label": "Compile error or control cannot load after a Windows update",
+        "next": "operate.partial.controls"
+      },
+      {
+        "label": "Requested picture is not drawn, old one stays visible",
+        "next": "operate.partial.replace"
+      },
+      {
+        "label": "None of these",
+        "next": "operate.escalate"
+      }
+    ]
+  },
+  "operate.partial.comm": {
+    "id": "operate.partial.comm",
+    "type": "terminal",
+    "title": "Workstation lost its DeltaV network connection",
+    "domain": "Operate",
+    "description": "Check how the node appears in DeltaV Diagnostics. On v7.3-v9.x, operator stations with simplex communication could send incorrect messages that made DVCommService on other stations exit (AP-0700-0094).",
+    "layer": "network",
+    "riskLevel": "Read Only",
+    "actions": [
+      "Open DeltaV Diagnostics and check whether the node is disconnected",
+      "Check that DVCommService, RTRocService and the DeltaV Service are running",
+      "Check the Software Updates KBA for communication hotfixes"
+    ],
+    "sources": [
+      "NK-1000-0176 §8.3.1, §8.3.4, §8.5.2",
+      "AP-0700-0094"
+    ]
+  },
+  "operate.partial.isolate": {
+    "id": "operate.partial.isolate",
+    "type": "terminal",
+    "title": "Isolate the offending object or script",
+    "domain": "Operate",
+    "description": "Find the script or object that triggers the lockup. Get help from someone familiar with Operate or VBA.",
+    "layer": "application",
+    "mechanism": "activex-ole",
+    "riskLevel": "Read Only",
+    "actions": [
+      "Open the picture in Configure mode and disable scripts and objects one by one",
+      "Run DumpDataSources on the picture",
+      "Check third-party ActiveX controls and test them for compatibility and loading speed",
+      "Collect the related picture, module export and sequence of events"
+    ],
+    "sources": [
+      "NK-1000-0176 §2.2.g, §8.3.2.g"
+    ]
+  },
+  "operate.partial.controls": {
+    "id": "operate.partial.controls",
+    "type": "terminal",
+    "title": "Compile error after a Microsoft Common Controls update",
+    "domain": "Operate",
+    "description": "'Compile error in hidden module: frsDevAlm' or 'Object library invalid' can appear after MSComCtl.ocx security updates. Applies to v11.3.x-v13.3.",
+    "layer": "application",
+    "mechanism": "activex-ole",
+    "riskLevel": "Controlled Impact",
+    "actions": [
+      "Run regall /register, or delete the extender files (*.EXD) on the machine",
+      "If DVBCtrl cannot load when opening graphics with Batch controls, apply the workaround in NK-1100-1090"
+    ],
+    "sources": [
+      "NK-1000-0176 §8.3.4",
+      "AK-1200-0018",
+      "NK-1100-1090"
+    ]
+  },
+  "operate.partial.replace": {
+    "id": "operate.partial.replace",
+    "type": "terminal",
+    "title": "ReplacePicture does not draw the new picture",
+    "domain": "Operate",
+    "description": "With color quality set to Highest (32 bit) the old picture stays visible with stale data while the hot spots of the new picture still react. Also, if no picture name is given to ReplacePicture, the main picture may show up in the alarm banner, toolbar or a popup.",
+    "layer": "application",
+    "mechanism": "windows-os",
+    "riskLevel": "Controlled Impact",
+    "actions": [
+      "Set color quality to Medium (16 bit)",
+      "Always pass the name of the picture to be replaced"
+    ],
+    "sources": [
+      "NK-1000-0176 §3.b, §8.3.4",
+      "AP-0900-0033"
+    ]
+  },
+  "operate.total.collect": {
+    "id": "operate.total.collect",
+    "type": "checklist",
+    "title": "Collect hardware and OS evidence",
+    "domain": "Operate",
+    "description": "Total lockups are usually caused by hardware, drivers, Windows settings or memory leaks.",
+    "layer": "physical",
+    "mechanism": "windows-os",
+    "riskLevel": "Read Only",
+    "sources": [
+      "NK-1000-0176 §8.4.2"
+    ],
+    "items": [
+      "Check the BIOS log",
+      "Collect the Windows System and Application event logs",
+      "List third-party hardware and software (KVM, drivers)",
+      "Collect System Information (msinfo32)",
+      "Watch memory usage per process in Task Manager"
+    ],
+    "next": "operate.total.cause",
+    "nextLabel": "Continue to likely causes"
+  },
+  "operate.total.cause": {
+    "id": "operate.total.cause",
+    "type": "question",
+    "title": "Which pattern matches?",
+    "domain": "Operate",
+    "layer": "application",
+    "sources": [
+      "NK-1000-0176 §8.4.4"
+    ],
+    "answers": [
+      {
+        "label": "Out of Memory, black patches or blank screens, many bitmaps",
+        "next": "operate.total.gdi",
+        "sub": "§2.1.f"
+      },
+      {
+        "label": "Out of Memory after ungrouping dynamos",
+        "next": "operate.total.picvars",
+        "sub": "NA-0300-0088"
+      },
+      {
+        "label": "'Unable to allocate enough system resources'",
+        "next": "operate.total.dib",
+        "sub": "AK-1400-0071"
+      },
+      {
+        "label": "Flashing or distorted screen after changing the mouse pointer scheme",
+        "next": "operate.total.mouse",
+        "sub": "AP-0900-0142"
+      },
+      {
+        "label": "Blue screen, reboots, USB or video card problems",
+        "next": "operate.total.hw"
+      },
+      {
+        "label": "None of these",
+        "next": "operate.escalate"
+      }
+    ]
+  },
+  "operate.total.gdi": {
+    "id": "operate.total.gdi",
+    "type": "terminal",
+    "title": "GDI object limit reached",
+    "domain": "Operate",
+    "description": "Workspace.exe is limited to 10,000 GDI objects. Bitmaps consume many, and multi-monitor stations open more displays. Check the GDI Objects column on the Processes tab of Task Manager.",
+    "layer": "application",
+    "mechanism": "windows-os",
+    "riskLevel": "Controlled Impact",
+    "actions": [
+      "Reduce bitmaps on displays",
+      "Disable picture caching on pictures with many bitmaps",
+      "If Workspace.exe exceeds the limit, reduce the system-level cache size from 5 to 1",
+      "Set GDIProcessHandleQuota to 16384 and USERProcessHandleQuota to 18000 (decimal) under HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Windows"
+    ],
+    "sources": [
+      "NK-1000-0176 §2.1.f, §8.4.4"
+    ]
+  },
+  "operate.total.picvars": {
+    "id": "operate.total.picvars",
+    "type": "terminal",
+    "title": "Memory leak from picture variables",
+    "domain": "Operate",
+    "description": "Variables created at the root of a picture cause a memory leak. Ungrouping dynamos can leave ps_datasource and frsdynamoinfo under the picture root.",
+    "layer": "application",
+    "riskLevel": "Controlled Impact",
+    "actions": [
+      "Delete variables at the picture root, including ps_datasource and frsdynamoinfo"
+    ],
+    "sources": [
+      "NK-1000-0176 §2.1.d, §8.4.4",
+      "NA-0300-0088"
+    ]
+  },
+  "operate.total.dib": {
+    "id": "operate.total.dib",
+    "type": "terminal",
+    "title": "Display driver memory exhausted by cached pictures",
+    "domain": "Operate",
+    "description": "Applies to v11.3.x and later.",
+    "layer": "application",
+    "mechanism": "windows-os",
+    "riskLevel": "Controlled Impact",
+    "actions": [
+      "Add or modify OnDrawUseDIB in FixUserPreferences.ini and set it to 1"
+    ],
+    "sources": [
+      "NK-1000-0176 §8.4.4",
+      "AK-1400-0071"
+    ]
+  },
+  "operate.total.mouse": {
+    "id": "operate.total.mouse",
+    "type": "terminal",
+    "title": "Mouse pointer scheme",
+    "domain": "Operate",
+    "description": "Non-default mouse schemes can cause video abnormalities and an unresponsive machine.",
+    "layer": "application",
+    "mechanism": "windows-os",
+    "riskLevel": "Controlled Impact",
+    "actions": [
+      "Set the mouse scheme to the operating system default, or enable pointer shadow when using another scheme"
+    ],
+    "sources": [
+      "NK-1000-0176 §3.c, §8.4.4",
+      "AP-0900-0142"
+    ]
+  },
+  "operate.total.hw": {
+    "id": "operate.total.hw",
+    "type": "terminal",
+    "title": "Hardware or driver related lockup",
+    "domain": "Operate",
+    "description": "Listed cases include Dell WS380/WS390 memory and reinstall blue screens, USB devices stopping on T3400, Matrox PowerDesk GDI leak on four-monitor stations and handle leaks on a Dell R5500 (update the audio driver). These are old hardware generations.",
+    "layer": "physical",
+    "riskLevel": "Read Only",
+    "actions": [
+      "Confirm the machine type is in AK-1000-0070",
+      "Check video card and driver versions",
+      "Update drivers (for example audio on R5500)",
+      "Send the Windows event logs to Technical Support"
+    ],
+    "sources": [
+      "NK-1000-0176 §7, §8.4.4",
+      "AK-1000-0070"
+    ]
+  },
+  "operate.data.scope": {
+    "id": "operate.data.scope",
+    "type": "question",
+    "title": "How widespread is the data problem?",
+    "domain": "Operate",
+    "description": "Also note the exact symptom: @@@@, &&&&, **** or a wrong value, and what fixes it (reopen picture, Reset Layout, restart Operate, reboot).",
+    "layer": "transport-session",
+    "sources": [
+      "NK-1000-0176 §8.5.2"
+    ],
+    "answers": [
+      {
+        "label": "All datalinks are not communicating",
+        "next": "operate.data.all",
+        "sub": "Case 1"
+      },
+      {
+        "label": "One controller or module",
+        "next": "operate.data.module",
+        "sub": "Case 2"
+      },
+      {
+        "label": "Most datalinks on one picture show &&&& / magenta",
+        "next": "operate.data.picture",
+        "sub": "Case 3"
+      },
+      {
+        "label": "A value differs between workstations",
+        "next": "operate.data.differs",
+        "sub": "Case 4"
+      },
+      {
+        "label": "A wrong value is written or a write goes to the wrong module",
+        "next": "operate.data.write"
+      }
+    ]
+  },
+  "operate.data.all": {
+    "id": "operate.data.all",
+    "type": "checklist",
+    "title": "Is DVSYS and the base services running?",
+    "domain": "Operate",
+    "layer": "transport-session",
+    "mechanism": "dcom-rpc",
+    "riskLevel": "Controlled Impact",
+    "sources": [
+      "NK-1000-0176 §8.5.2.1"
+    ],
+    "items": [
+      "Check that DVSYS.exe is running in Task Manager",
+      "If not, look for DCOM errors on DVSYS in the Windows Event Log",
+      "Run regall /register",
+      "If DVSYS is running, check RTRocService, DVCommService and the DeltaV Service",
+      "If the base services are not running, look for communication hotfixes"
+    ],
+    "next": "operate.escalate",
+    "nextLabel": "Still failing: escalate"
+  },
+  "operate.data.module": {
+    "id": "operate.data.module",
+    "type": "checklist",
+    "title": "Test one controller or module",
+    "domain": "Operate",
+    "layer": "transport-session",
+    "riskLevel": "Controlled Impact",
+    "sources": [
+      "NK-1000-0176 §8.5.2.2"
+    ],
+    "items": [
+      "Check in Diagnostics whether the controller communicates from the affected workstation",
+      "Run Watchit (Start > Run > watchit) and enter the path in upper case, for example FIC101/PID1/OUT.CV",
+      "If Watchit fails, repeat from another workstation",
+      "Check that DT.scr and MODT.scr are up to date; if not, recreate them by downloading the workstation (Controlled Impact)"
+    ],
+    "next": "operate.escalate",
+    "nextLabel": "Still failing: escalate"
+  },
+  "operate.data.picture": {
+    "id": "operate.data.picture",
+    "type": "terminal",
+    "title": "Whole picture shows &&&& and magenta",
+    "domain": "Operate",
+    "description": "Check that the datasource path is valid. If it is intermittent, look for invalid datasources. Expressions with tag group symbols may show **** when the operators are not separated by spaces.",
+    "layer": "application",
+    "riskLevel": "Read Only",
+    "actions": [
+      "Verify the path with Watchit",
+      "Open DVStatus.grf in Run mode and check for ADD errors",
+      "For tag group symbols in expressions check the full path and that operators (+, -, /, *, OR, AND) are separated by spaces"
+    ],
+    "sources": [
+      "NK-1000-0176 §8.5.2.3, §8.5.4",
+      "AP-0500-0075",
+      "AP-0900-0144"
+    ]
+  },
+  "operate.data.differs": {
+    "id": "operate.data.differs",
+    "type": "checklist",
+    "title": "Value differs between workstations: walk the data path",
+    "domain": "Operate",
+    "description": "Check which side holds the right value. Upper case is required for the module and parameter names in these tools.",
+    "layer": "transport-session",
+    "riskLevel": "Read Only",
+    "sources": [
+      "NK-1000-0176 §8.5.2.4"
+    ],
+    "items": [
+      "Does the value update on other workstations, other pictures, or in a faceplate? Does Reset Layout or reopening Operate fix it?",
+      "v10.3.x and earlier only: OCNDiag (run as deltavadmin) - expand DVSYS.exe, find the parameter and watch Last Notify Time",
+      "UnsolDiag: option 3 (proxy clients), option 6 (attributes for a client module), option 7 (attributes for a server module); paste the output into Notepad",
+      "Watchit: compare the value to the one in Operate and see whether Operate then updates",
+      "OPCWatchit with server DeltaV.DVSysSvr: Device Read unchecked, type the path as in Operate including the type code such as F_ or A_, compare Value and Quality"
+    ],
+    "next": "operate.escalate",
+    "nextLabel": "Escalate with the tool output"
+  },
+  "operate.data.write": {
+    "id": "operate.data.write",
+    "type": "question",
+    "title": "What exactly is written wrong?",
+    "domain": "Operate",
+    "layer": "application",
+    "sources": [
+      "NK-1000-0176 §8.5.4"
+    ],
+    "answers": [
+      {
+        "label": "A faceplate for one module writes to another module",
+        "next": "operate.data.scu",
+        "sub": "AP-0900-0176"
+      },
+      {
+        "label": "Fix32.ThisNode datalinks are empty in Remote Client sessions",
+        "next": "operate.data.thisnode",
+        "sub": "NK-1000-0105"
+      },
+      {
+        "label": "Data Entry Slider does not write fractional values",
+        "next": "operate.data.slider",
+        "sub": "AK-1100-0046"
+      }
+    ]
+  },
+  "operate.data.scu": {
+    "id": "operate.data.scu",
+    "type": "terminal",
+    "title": "Operator System Configuration Utility paths are wrong",
+    "domain": "Operate",
+    "description": "The SCU paths determine where Operate gets pictures and configuration files. They must point to the local node name and directory.",
+    "layer": "application",
+    "riskLevel": "Controlled Impact",
+    "actions": [
+      "Open the Operator System Configuration Utility and verify the paths point to the local node"
+    ],
+    "sources": [
+      "NK-1000-0176 §5.a, §8.5.4",
+      "AP-0900-0176"
+    ]
+  },
+  "operate.data.thisnode": {
+    "id": "operate.data.thisnode",
+    "type": "terminal",
+    "title": "Fix32.ThisNode in Remote Client sessions",
+    "domain": "Operate",
+    "description": "Datalinks, animations or VB reads using Fix32.ThisNode do not return values in Remote Terminal Server sessions while local sessions work. Applies to v8.x-v14.FP1.",
+    "layer": "application",
+    "riskLevel": "Read Only",
+    "actions": [
+      "Open the picture in Configure mode and check the full path",
+      "Check whether it uses Fix32.ThisNode or DVSYS as dataserver"
+    ],
+    "sources": [
+      "NK-1000-0176 §8.5.4",
+      "NK-1000-0105"
+    ]
+  },
+  "operate.data.slider": {
+    "id": "operate.data.slider",
+    "type": "terminal",
+    "title": "Data Entry Slider Expert limitation",
+    "domain": "Operate",
+    "description": "Fractional values are not written and the slider jumps by 5 or to min/max when the EU range is below 5.",
+    "layer": "application",
+    "riskLevel": "Controlled Impact",
+    "actions": [
+      "Use the Numeric/AlphaNumeric or Ramp data entry type instead"
+    ],
+    "sources": [
+      "NK-1000-0176 §8.5.4",
+      "AK-1100-0046"
+    ]
+  },
+  "operate.multimon.collect": {
+    "id": "operate.multimon.collect",
+    "type": "checklist",
+    "title": "Describe the multi-monitor setup",
+    "domain": "Operate",
+    "layer": "physical",
+    "riskLevel": "Read Only",
+    "sources": [
+      "NK-1000-0176 §8.6.2"
+    ],
+    "items": [
+      "How many monitors are used and how many are affected",
+      "Arrangement in Windows Display Properties; Monitor 1 must be the primary display",
+      "Screen resolution and Layout files in use",
+      "Video card and driver version",
+      "Special hardware: KVM, Remote Desktop, Wyse thin clients, virtual environment"
+    ],
+    "next": "operate.multimon.cause",
+    "nextLabel": "Continue"
+  },
+  "operate.multimon.cause": {
+    "id": "operate.multimon.cause",
+    "type": "question",
+    "title": "Which behavior do you see?",
+    "domain": "Operate",
+    "layer": "application",
+    "sources": [
+      "NK-1000-0176 §8.6.4"
+    ],
+    "answers": [
+      {
+        "label": "Popups always open on the first monitor",
+        "next": "operate.multimon.hydra",
+        "sub": "NK-1100-1054"
+      },
+      {
+        "label": "Operate is resized, truncated or distorted after a monitor is switched off",
+        "next": "operate.multimon.reset",
+        "sub": "TFS227525 / TFS227434"
+      },
+      {
+        "label": "None of these",
+        "next": "operate.escalate"
+      }
+    ]
+  },
+  "operate.multimon.hydra": {
+    "id": "operate.multimon.hydra",
+    "type": "terminal",
+    "title": "HydraVision required on that machine model",
+    "domain": "Operate",
+    "description": "Listed for v11.3.x-v13.3.x on Windows 7 machine models that support HydraVision. See the related KBAs for install and quad-monitor setup issues.",
+    "layer": "physical",
+    "riskLevel": "Controlled Impact",
+    "actions": [
+      "Install and configure HydraVision on supported models and driver versions (NK-1100-1054)",
+      "For quad-monitor setups follow the model-specific KBAs, for example NK-1300-0127 (T3600) or NK-1600-0001 (R7910XL/T5810)"
+    ],
+    "sources": [
+      "NK-1000-0176 §7.c, §8.6.4",
+      "NK-1100-1054"
+    ]
+  },
+  "operate.multimon.reset": {
+    "id": "operate.multimon.reset",
+    "type": "terminal",
+    "title": "Operate window resized after monitor power-off",
+    "domain": "Operate",
+    "description": "Known issue on v11.x and later with no hotfix.",
+    "layer": "application",
+    "riskLevel": "Read Only",
+    "actions": [
+      "Resize or maximize the Operate window and click Reset Layout"
+    ],
+    "sources": [
+      "NK-1000-0176 §8.6.4.2",
+      "TFS227525",
+      "TFS227434"
+    ]
+  },
+  "operate.config": {
+    "id": "operate.config",
+    "type": "question",
+    "title": "Which area do you want to review?",
+    "domain": "Operate",
+    "description": "Best practices from sections 2-7. Each area is a checklist; you can come back and pick another.",
+    "layer": "application",
+    "sources": [
+      "NK-1000-0176 §2-§7"
+    ],
+    "answers": [
+      {
+        "label": "Pictures and animations",
+        "next": "operate.config.pictures",
+        "sub": "§2.1-2.2"
+      },
+      {
+        "label": "VBA scripting",
+        "next": "operate.config.vba",
+        "sub": "§2.3"
+      },
+      {
+        "label": "Windows and hardware settings",
+        "next": "operate.config.os",
+        "sub": "§3, §7"
+      },
+      {
+        "label": "Upgrades and deployment",
+        "next": "operate.config.upgrade",
+        "sub": "§4-5"
+      },
+      {
+        "label": "Remote client sessions",
+        "next": "operate.config.remote",
+        "sub": "§6"
+      },
+      {
+        "label": "Done",
+        "next": "operate.config.done",
+        "variant": "success"
+      }
+    ]
+  },
+  "operate.config.pictures": {
+    "id": "operate.config.pictures",
+    "type": "checklist",
+    "title": "Pictures and animations",
+    "domain": "Operate",
+    "layer": "application",
+    "mechanism": "activex-ole",
+    "riskLevel": "Read Only",
+    "sources": [
+      "NK-1000-0176 §2.1-2.2"
+    ],
+    "items": [
+      "Create, save and close pictures with the DeltaV_Standard toolbar buttons that count datalinks",
+      "Delete pictures via Configure mode and remove them from YellowPages on every workstation; on v14.LTS and later use the DeltaV Delete Utility and Recycle Bin",
+      "Rename by Save As, then delete the original",
+      "No picture variables at the picture root",
+      "Picture caching on at system level, size 5 or less; popups with dynamic datasources not cached",
+      "Limit bitmaps (GDI limit 10,000 objects)",
+      "Use the Advanced Animation Dialog; never edit animation objects from the System Tree",
+      "Datasource refresh 1 second or slower, one rate per picture",
+      "Stay under the datalink limits for your version",
+      "No Data Conversion type 'Object'",
+      "Test third-party ActiveX controls thoroughly and avoid animating them",
+      "Run DumpDataSources and fix all findings before deploying"
+    ],
+    "next": "operate.config",
+    "nextLabel": "Back to areas"
+  },
+  "operate.config.vba": {
+    "id": "operate.config.vba",
+    "type": "checklist",
+    "title": "VBA scripting",
+    "domain": "Operate",
+    "layer": "application",
+    "mechanism": "activex-ole",
+    "riskLevel": "Read Only",
+    "sources": [
+      "NK-1000-0176 §2.3"
+    ],
+    "items": [
+      "Prefer the DeltaV frs functions; never use frsz-prefixed routines",
+      "Long-running routines in Background Schedules, not in pictures or User.fxg / SIGlobals.fxg",
+      "Do not change Object.Source rapidly at run time",
+      "Avoid consecutive frsReadValue / frsWriteValue calls",
+      "Use OnTrue / OnFalse events instead of DataChange"
+    ],
+    "next": "operate.config",
+    "nextLabel": "Back to areas"
+  },
+  "operate.config.os": {
+    "id": "operate.config.os",
+    "type": "checklist",
+    "title": "Windows and hardware settings",
+    "domain": "WindowsOS",
+    "layer": "application",
+    "mechanism": "windows-os",
+    "riskLevel": "Read Only",
+    "sources": [
+      "NK-1000-0176 §3, §7"
+    ],
+    "items": [
+      "Visual effects, processor scheduling and memory usage set for best performance of programs (workstations)",
+      "Color quality Medium (16 bit)",
+      "Supported resolution with the matching Main template (Main, Main1280, Main1680 from v10.3, Main1920 from v13.3)",
+      "Default mouse scheme",
+      "System locale matches the DeltaV language release",
+      "NIC binding order per the Win7Help document",
+      "Windows Error Reporting UI disabled and full crash dumps enabled",
+      "Qualified machine type, OS, video card and driver",
+      "Windows security updates and DeltaV hotfixes up to date"
+    ],
+    "next": "operate.config",
+    "nextLabel": "Back to areas"
+  },
+  "operate.config.upgrade": {
+    "id": "operate.config.upgrade",
+    "type": "checklist",
+    "title": "Upgrades and deployment",
+    "domain": "Operate",
+    "layer": "application",
+    "riskLevel": "Read Only",
+    "sources": [
+      "NK-1000-0176 §4-5"
+    ],
+    "items": [
+      "Follow AP-0600-0101 before and after an upgrade",
+      "Use the DeltaV Upgrade Wizard; do not copy .fxg, FRS_ .evs or default graphics from an older version",
+      "Save modified standard pictures under another name so an upgrade does not overwrite them",
+      "Back up custom User.fxg and SiGlobals.fxg (replaced by v12.3.1 SP1 media)",
+      "Install TFS223516 before upgrading workstations while controllers are still at v10.3.1",
+      "SCU paths point to the local node and directory before going to production",
+      "Know how the Auto-Update Service (YellowPages) works (AP-0500-0084)"
+    ],
+    "next": "operate.config",
+    "nextLabel": "Back to areas"
+  },
+  "operate.config.remote": {
+    "id": "operate.config.remote",
+    "type": "checklist",
+    "title": "Remote client sessions",
+    "domain": "Operate",
+    "layer": "application",
+    "riskLevel": "Read Only",
+    "sources": [
+      "NK-1000-0176 §6"
+    ],
+    "items": [
+      "Install DeltaV as Remote Client Server on the terminal server node",
+      "WAN sessions can be 2 to 10 times slower: use purpose-built displays without bitmaps and with few datalinks",
+      "At most 8 concurrent Operate sessions and 7200 unique datalinks combined",
+      "Same display properties as local stations (color quality 16 bit)"
+    ],
+    "next": "operate.config",
+    "nextLabel": "Back to areas"
+  },
+  "operate.config.done": {
+    "id": "operate.config.done",
+    "type": "terminal",
+    "title": "Review finished",
+    "domain": "Operate",
+    "variant": "success",
+    "description": "Fix the open items, then use DumpDataSources to verify the pictures.",
+    "layer": "application",
+    "sources": [
+      "NK-1000-0176"
+    ]
+  },
+  "operate.escalate": {
+    "id": "operate.escalate",
+    "type": "terminal",
+    "title": "Collect this before contacting Technical Support",
+    "domain": "Operate",
+    "description": "Gather the data once so the case does not stall on follow-up requests.",
+    "layer": "application",
+    "riskLevel": "Read Only",
+    "sources": [
+      "NK-1000-0176 §8"
+    ],
+    "actions": [
+      "Sequence of events leading to the problem",
+      "Run the DeltaV Data Collector if it is not specific to one module or picture (NK-1100-1172)",
+      "Related DeltaV database or module export",
+      "Related Operate pictures (GRF and Layout files for multi-monitor issues)",
+      "Windows System and Application event logs and crash dumps"
     ]
   }
 }

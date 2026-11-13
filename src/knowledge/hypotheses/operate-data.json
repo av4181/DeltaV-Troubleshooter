@@ -1,0 +1,994 @@
+{
+  "meta": {
+    "id": "operate-data",
+    "title": "DeltaV Operate: datalink or animation not showing or writing the correct value (NK-1000-0176 §8.5)",
+    "priorsReviewed": false
+  },
+  "hypotheses": [
+    {
+      "id": "dvsys_down",
+      "title": "DVSYS.exe is not running or failed to register (DCOM)",
+      "description": "DVSYS is the data server Operate polls. If it is not running, every datalink fails. The guide points at DCOM errors on DVSYS and at re-registering with regall.",
+      "domain": "Operate",
+      "layer": "transport-session",
+      "mechanism": "dcom-rpc",
+      "prior": "possible",
+      "actions": [
+        "Check Task Manager for DVSYS.exe",
+        "Look for DCOM errors on DVSYS in the Windows Event Log",
+        "Run regall /register (Controlled Impact)",
+        "Check for communication hotfixes"
+      ],
+      "sources": [
+        "NK-1000-0176 §8.5.2.1"
+      ]
+    },
+    {
+      "id": "base_services",
+      "title": "A base DeltaV service is stopped (RTRocService, DVCommService, DeltaV Service)",
+      "description": "DVSYS can run while the services that bring it its data are down.",
+      "domain": "Operate",
+      "layer": "transport-session",
+      "prior": "unlikely",
+      "actions": [
+        "Check the three services",
+        "Look for communication-related hotfixes",
+        "Restart services only per the site procedure"
+      ],
+      "sources": [
+        "NK-1000-0176 §8.5.2.1"
+      ]
+    },
+    {
+      "id": "comm_lost",
+      "title": "This workstation lost its connection to the DeltaV network",
+      "description": "Shows as a red X for the node in DeltaV Diagnostics and as 'Network Transaction is in Progress' or not-communicating datalinks. On v7.3-v9.x, operator stations with simplex communication could make DVCommService on other stations exit (AP-0700-0094).",
+      "domain": "Operate",
+      "layer": "network",
+      "prior": "possible",
+      "actions": [
+        "Open DeltaV Diagnostics from this workstation",
+        "Check both network connections and the switch ports",
+        "Check DVCommService"
+      ],
+      "sources": [
+        "NK-1000-0176 §8.3.1, §8.5.4",
+        "AP-0700-0094"
+      ]
+    },
+    {
+      "id": "controller_comm",
+      "title": "The controller of the affected modules is not communicating",
+      "description": "Only the datalinks and animations of one controller or module fail (@@@@ or ****).",
+      "domain": "Controller",
+      "layer": "network",
+      "prior": "possible",
+      "actions": [
+        "Check the controller in Diagnostics from the affected workstation",
+        "Test the parameter with Watchit and repeat from another workstation"
+      ],
+      "sources": [
+        "NK-1000-0176 §8.5.2.2"
+      ]
+    },
+    {
+      "id": "stale_scr",
+      "title": "DT.scr / MODT.scr are outdated on this workstation",
+      "description": "The workstation lacks current module/data tables. The guide recreates them by downloading the workstation.",
+      "domain": "Operate",
+      "layer": "application",
+      "prior": "possible",
+      "actions": [
+        "Check the timestamps of DT.scr and MODT.scr",
+        "Download the workstation to recreate them (Controlled Impact)"
+      ],
+      "sources": [
+        "NK-1000-0176 §8.5.2.2"
+      ]
+    },
+    {
+      "id": "invalid_datasource",
+      "title": "Pictures contain invalid datasources",
+      "description": "Invalid datasources cause intermittent &&&& and magenta, high CPU and temporary lockups. Closing Operate may take about 10 minutes for DVSYS to exit.",
+      "domain": "Operate",
+      "layer": "application",
+      "prior": "likely",
+      "actions": [
+        "Open DVStatus.grf in Run mode and check the ADD header for errors",
+        "Walk through all pictures and user scenarios that change datasource references",
+        "Run DumpDataSources (AP-0800-0053)"
+      ],
+      "sources": [
+        "NK-1000-0176 §8.2.4, §8.5.2.3, §8.5.4",
+        "AP-0500-0075",
+        "AP-0800-0053"
+      ]
+    },
+    {
+      "id": "tag_group_expr",
+      "title": "Tag group symbol in a datasource expression",
+      "description": "Datasources that are expressions containing a tag group symbol show **** or magenta, especially when operators are not separated by spaces. Listed for v8.x-v12.x; the guide does not say later versions are unaffected.",
+      "domain": "Operate",
+      "layer": "application",
+      "prior": "unlikely",
+      "actions": [
+        "Read the complete datasource path",
+        "Check that operators (+, -, /, *, OR, AND) are separated by spaces",
+        "Follow AP-0900-0144"
+      ],
+      "sources": [
+        "NK-1000-0176 §8.5.4",
+        "AP-0900-0144"
+      ]
+    },
+    {
+      "id": "notify_stale",
+      "title": "Updates for this module do not reach this workstation",
+      "description": "The value is right at the source and on other workstations but not here. The guide gives OCNDiag, UnsolDiag, Watchit and OPCWatchit to follow the data, but names no single root cause, so this is a working hypothesis for 'value differs per workstation'.",
+      "domain": "Operate",
+      "layer": "transport-session",
+      "mechanism": "roc-udp",
+      "prior": "possible",
+      "verified": false,
+      "actions": [
+        "Follow the data with UnsolDiag, Watchit and OPCWatchit",
+        "On v10.3.x and earlier also use OCNDiag",
+        "Escalate with the tool output"
+      ],
+      "sources": [
+        "NK-1000-0176 §8.5.2.4"
+      ]
+    },
+    {
+      "id": "scu_paths",
+      "title": "Operator System Configuration Utility paths are wrong",
+      "description": "A faceplate for one module writes to another module when the SCU paths do not point to the local node name and directory. Listed for v8.x-v14.x.",
+      "domain": "Operate",
+      "layer": "application",
+      "prior": "unlikely",
+      "actions": [
+        "Open the Operator System Configuration Utility",
+        "Point the paths to the local node name and directory"
+      ],
+      "sources": [
+        "NK-1000-0176 §5.a, §8.5.4",
+        "AP-0900-0176"
+      ]
+    },
+    {
+      "id": "thisnode_remote",
+      "title": "Fix32.ThisNode datasources in a Remote Client session",
+      "description": "Datalinks, animations or VB reads that use Fix32.ThisNode return nothing in Remote Terminal Server sessions while the same objects work locally. Listed for v8.x-v14.FP1.",
+      "domain": "Operate",
+      "layer": "application",
+      "prior": "unlikely",
+      "actions": [
+        "Open the picture in Configure mode and check the full path",
+        "Check whether it uses Fix32.ThisNode or DVSYS as dataserver"
+      ],
+      "sources": [
+        "NK-1000-0176 §8.5.4",
+        "NK-1000-0105"
+      ]
+    }
+  ],
+  "observations": [
+    {
+      "id": "scope",
+      "question": "Which datalinks are affected?",
+      "howTo": "Check several pictures and several modules before deciding.",
+      "cost": "low",
+      "risk": "Read Only",
+      "sources": [
+        "NK-1000-0176 §8.5.2"
+      ],
+      "options": [
+        {
+          "id": "all",
+          "label": "All datalinks, on every picture",
+          "effects": [
+            {
+              "hypothesis": "dvsys_down",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "base_services",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "comm_lost",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "controller_comm",
+              "effect": "weakens",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "stale_scr",
+              "effect": "weakens",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "invalid_datasource",
+              "effect": "weakens",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "tag_group_expr",
+              "effect": "weakens",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "module",
+          "label": "Only the datalinks of one controller or module",
+          "effects": [
+            {
+              "hypothesis": "dvsys_down",
+              "effect": "excludes",
+              "because": "DVSYS down would fail every datalink, not one module."
+            },
+            {
+              "hypothesis": "base_services",
+              "effect": "excludes",
+              "because": "A stopped base service would fail every datalink, not one module."
+            },
+            {
+              "hypothesis": "controller_comm",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "stale_scr",
+              "effect": "supports",
+              "strength": "weak"
+            }
+          ]
+        },
+        {
+          "id": "picture",
+          "label": "Most datalinks on one picture; other pictures update normally",
+          "effects": [
+            {
+              "hypothesis": "dvsys_down",
+              "effect": "excludes",
+              "because": "Other pictures update, so DVSYS is serving data."
+            },
+            {
+              "hypothesis": "base_services",
+              "effect": "excludes",
+              "because": "Other pictures update, so the data path works."
+            },
+            {
+              "hypothesis": "comm_lost",
+              "effect": "excludes",
+              "because": "Other pictures update, so the workstation is connected."
+            },
+            {
+              "hypothesis": "invalid_datasource",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "tag_group_expr",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "controller_comm",
+              "effect": "weakens",
+              "strength": "weak"
+            }
+          ]
+        },
+        {
+          "id": "differs",
+          "label": "The same datalink shows a different value than on another workstation",
+          "effects": [
+            {
+              "hypothesis": "notify_stale",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "stale_scr",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "comm_lost",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "invalid_datasource",
+              "effect": "weakens",
+              "strength": "weak"
+            }
+          ]
+        },
+        {
+          "id": "write",
+          "label": "A write goes wrong (wrong value or wrong module)",
+          "effects": [
+            {
+              "hypothesis": "scu_paths",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "thisnode_remote",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "dvsys_down",
+              "effect": "weakens",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "base_services",
+              "effect": "weakens",
+              "strength": "weak"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "symbol",
+      "question": "What do the affected datalinks show?",
+      "howTo": "Look at the datalink text and the animation colour.",
+      "cost": "low",
+      "risk": "Read Only",
+      "sources": [
+        "NK-1000-0176 §8.5.1, §8.5.2"
+      ],
+      "options": [
+        {
+          "id": "amp",
+          "label": "&&&& with magenta animations",
+          "effects": [
+            {
+              "hypothesis": "invalid_datasource",
+              "effect": "supports",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "at",
+          "label": "@@@@",
+          "effects": [
+            {
+              "hypothesis": "controller_comm",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "stale_scr",
+              "effect": "supports",
+              "strength": "weak"
+            }
+          ]
+        },
+        {
+          "id": "stars",
+          "label": "****",
+          "effects": [
+            {
+              "hypothesis": "tag_group_expr",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "controller_comm",
+              "effect": "supports",
+              "strength": "weak"
+            }
+          ]
+        },
+        {
+          "id": "wrong",
+          "label": "A wrong value without error symbols",
+          "effects": [
+            {
+              "hypothesis": "notify_stale",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "scu_paths",
+              "effect": "supports",
+              "strength": "weak"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dvsys_running",
+      "question": "Is DVSYS.exe running in Task Manager?",
+      "howTo": "Task Manager, Processes tab.",
+      "cost": "low",
+      "risk": "Read Only",
+      "sources": [
+        "NK-1000-0176 §8.5.2.1"
+      ],
+      "options": [
+        {
+          "id": "yes",
+          "label": "Yes",
+          "effects": [
+            {
+              "hypothesis": "dvsys_down",
+              "effect": "excludes",
+              "because": "The hypothesis is that DVSYS is not running, and it is."
+            }
+          ]
+        },
+        {
+          "id": "no",
+          "label": "No",
+          "effects": [
+            {
+              "hypothesis": "dvsys_down",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "base_services",
+              "effect": "supports",
+              "strength": "weak"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dcom_log",
+      "question": "Does the Windows Event Log show DCOM errors on DVSYS?",
+      "howTo": "Event Viewer, System and Application logs.",
+      "cost": "low",
+      "risk": "Read Only",
+      "sources": [
+        "NK-1000-0176 §8.5.2.1"
+      ],
+      "options": [
+        {
+          "id": "yes",
+          "label": "Yes",
+          "effects": [
+            {
+              "hypothesis": "dvsys_down",
+              "effect": "supports",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "no",
+          "label": "No",
+          "effects": [
+            {
+              "hypothesis": "dvsys_down",
+              "effect": "weakens",
+              "strength": "weak"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "services",
+      "question": "Are RTRocService, DVCommService and the DeltaV Service all running?",
+      "howTo": "services.msc or Task Manager, Services tab.",
+      "cost": "low",
+      "risk": "Read Only",
+      "sources": [
+        "NK-1000-0176 §8.5.2.1"
+      ],
+      "options": [
+        {
+          "id": "yes",
+          "label": "Yes",
+          "effects": [
+            {
+              "hypothesis": "base_services",
+              "effect": "excludes",
+              "because": "All three base services are running."
+            }
+          ]
+        },
+        {
+          "id": "no",
+          "label": "No",
+          "effects": [
+            {
+              "hypothesis": "base_services",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "comm_lost",
+              "effect": "supports",
+              "strength": "weak"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "diag_node",
+      "question": "Does DeltaV Diagnostics show this workstation as connected (no red X)?",
+      "howTo": "Open DeltaV Diagnostics on this workstation.",
+      "cost": "low",
+      "risk": "Read Only",
+      "sources": [
+        "NK-1000-0176 §8.3.1"
+      ],
+      "options": [
+        {
+          "id": "yes",
+          "label": "Yes",
+          "effects": [
+            {
+              "hypothesis": "comm_lost",
+              "effect": "weakens",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "no",
+          "label": "No",
+          "effects": [
+            {
+              "hypothesis": "comm_lost",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "base_services",
+              "effect": "supports",
+              "strength": "weak"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "diag_controller",
+      "question": "Does Diagnostics show the affected controller as communicating from this workstation?",
+      "howTo": "DeltaV Diagnostics on the affected workstation.",
+      "cost": "low",
+      "risk": "Read Only",
+      "sources": [
+        "NK-1000-0176 §8.5.2.2"
+      ],
+      "options": [
+        {
+          "id": "yes",
+          "label": "Yes",
+          "effects": [
+            {
+              "hypothesis": "controller_comm",
+              "effect": "weakens",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "no",
+          "label": "No",
+          "effects": [
+            {
+              "hypothesis": "controller_comm",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "comm_lost",
+              "effect": "supports",
+              "strength": "weak"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "watchit",
+      "question": "Does Watchit return the correct live value on this workstation?",
+      "howTo": "Start > Run > watchit. Type the parameter path in UPPER CASE, for example FIC101/PID1/OUT.CV.",
+      "cost": "low",
+      "risk": "Read Only",
+      "sources": [
+        "NK-1000-0176 §8.5.2.2-8.5.2.3"
+      ],
+      "options": [
+        {
+          "id": "yes",
+          "label": "Yes",
+          "effects": [
+            {
+              "hypothesis": "controller_comm",
+              "effect": "excludes",
+              "because": "A correct live read from this workstation shows the controller is reachable from it."
+            },
+            {
+              "hypothesis": "stale_scr",
+              "effect": "weakens",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "invalid_datasource",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "notify_stale",
+              "effect": "supports",
+              "strength": "weak"
+            }
+          ]
+        },
+        {
+          "id": "no",
+          "label": "No",
+          "effects": [
+            {
+              "hypothesis": "controller_comm",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "stale_scr",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "comm_lost",
+              "effect": "supports",
+              "strength": "weak"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_files",
+      "question": "Are DT.scr and MODT.scr up to date on this workstation?",
+      "howTo": "Compare their timestamps with the last download of this workstation.",
+      "cost": "medium",
+      "risk": "Read Only",
+      "sources": [
+        "NK-1000-0176 §8.5.2.2"
+      ],
+      "options": [
+        {
+          "id": "yes",
+          "label": "Yes",
+          "effects": [
+            {
+              "hypothesis": "stale_scr",
+              "effect": "weakens",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "no",
+          "label": "No",
+          "effects": [
+            {
+              "hypothesis": "stale_scr",
+              "effect": "supports",
+              "strength": "strong"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "add_errors",
+      "question": "Does DVStatus.grf show ADD errors in its header (Operate Run mode)?",
+      "howTo": "Open DVStatus.grf in Run mode while the symptom is present.",
+      "cost": "medium",
+      "risk": "Read Only",
+      "sources": [
+        "NK-1000-0176 §8.5.2.3",
+        "AP-0500-0075"
+      ],
+      "options": [
+        {
+          "id": "yes",
+          "label": "Yes",
+          "effects": [
+            {
+              "hypothesis": "invalid_datasource",
+              "effect": "supports",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "no",
+          "label": "No",
+          "effects": [
+            {
+              "hypothesis": "invalid_datasource",
+              "effect": "weakens",
+              "strength": "strong"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reopen",
+      "question": "Does reopening the picture (or Reset Layout) clear the symptom?",
+      "howTo": "Try it once and note the result.",
+      "cost": "low",
+      "risk": "Read Only",
+      "sources": [
+        "NK-1000-0176 §8.5.2.4, §8.5.4"
+      ],
+      "options": [
+        {
+          "id": "yes",
+          "label": "Yes, at least for a while",
+          "effects": [
+            {
+              "hypothesis": "invalid_datasource",
+              "effect": "supports",
+              "strength": "weak"
+            }
+          ]
+        },
+        {
+          "id": "no",
+          "label": "No",
+          "effects": [
+            {
+              "hypothesis": "invalid_datasource",
+              "effect": "weakens",
+              "strength": "weak"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tag_group",
+      "question": "Does the datasource expression contain a tag group symbol?",
+      "howTo": "Configure mode, animation dialog, full datasource path.",
+      "cost": "medium",
+      "risk": "Read Only",
+      "sources": [
+        "NK-1000-0176 §8.5.4",
+        "AP-0900-0144"
+      ],
+      "options": [
+        {
+          "id": "yes",
+          "label": "Yes",
+          "effects": [
+            {
+              "hypothesis": "tag_group_expr",
+              "effect": "supports",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "no",
+          "label": "No",
+          "effects": [
+            {
+              "hypothesis": "tag_group_expr",
+              "effect": "excludes",
+              "because": "The hypothesis requires a tag group symbol in the datasource expression."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "remote_only",
+      "question": "Does it only happen in a Remote Client (terminal server) session?",
+      "howTo": "Compare with a local session on a station.",
+      "cost": "medium",
+      "risk": "Read Only",
+      "sources": [
+        "NK-1000-0176 §8.5.4",
+        "NK-1000-0105"
+      ],
+      "options": [
+        {
+          "id": "yes",
+          "label": "Yes",
+          "effects": [
+            {
+              "hypothesis": "thisnode_remote",
+              "effect": "supports",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "no",
+          "label": "No",
+          "effects": [
+            {
+              "hypothesis": "thisnode_remote",
+              "effect": "excludes",
+              "because": "The hypothesis states the same objects work in local sessions."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "thisnode",
+      "question": "Does the datasource use Fix32.ThisNode?",
+      "howTo": "Open the picture in Configure mode and check the complete path.",
+      "cost": "medium",
+      "risk": "Read Only",
+      "sources": [
+        "NK-1000-0176 §8.5.4",
+        "NK-1000-0105"
+      ],
+      "options": [
+        {
+          "id": "yes",
+          "label": "Yes",
+          "effects": [
+            {
+              "hypothesis": "thisnode_remote",
+              "effect": "supports",
+              "strength": "weak"
+            }
+          ]
+        },
+        {
+          "id": "no",
+          "label": "No",
+          "effects": [
+            {
+              "hypothesis": "thisnode_remote",
+              "effect": "excludes",
+              "because": "The hypothesis requires Fix32.ThisNode as dataserver."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scu_paths",
+      "question": "Do the Operator System Configuration Utility paths point to the local node name and directory?",
+      "howTo": "Open the Operator System Configuration Utility.",
+      "cost": "low",
+      "risk": "Read Only",
+      "sources": [
+        "NK-1000-0176 §5.a, §8.5.4"
+      ],
+      "options": [
+        {
+          "id": "yes",
+          "label": "Yes",
+          "effects": [
+            {
+              "hypothesis": "scu_paths",
+              "effect": "excludes",
+              "because": "The hypothesis is that these paths are wrong, and they are correct."
+            }
+          ]
+        },
+        {
+          "id": "no",
+          "label": "No",
+          "effects": [
+            {
+              "hypothesis": "scu_paths",
+              "effect": "supports",
+              "strength": "strong"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "opcwatchit",
+      "question": "OPCWatchit on DeltaV.DVSysSvr: is the value correct with good quality?",
+      "howTo": "Start > Run > OPCWatchit, Device Read unchecked, Change Server, enter DeltaV.DVSysSvr, then Type Path with the DVSys type code (F_ or A_) in upper case.",
+      "cost": "medium",
+      "risk": "Read Only",
+      "sources": [
+        "NK-1000-0176 §8.5.2.4"
+      ],
+      "options": [
+        {
+          "id": "correct",
+          "label": "Correct value, good quality",
+          "effects": [
+            {
+              "hypothesis": "dvsys_down",
+              "effect": "excludes",
+              "because": "DVSYS just delivered a correct value."
+            },
+            {
+              "hypothesis": "controller_comm",
+              "effect": "weakens",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "notify_stale",
+              "effect": "supports",
+              "strength": "weak"
+            }
+          ]
+        },
+        {
+          "id": "bad",
+          "label": "Wrong value or bad quality",
+          "effects": [
+            {
+              "hypothesis": "controller_comm",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "comm_lost",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "notify_stale",
+              "effect": "weakens",
+              "strength": "weak"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "unsol",
+      "question": "UnsolDiag option 3: is this workstation listed as proxy client for the controller?",
+      "howTo": "Start > Run > UnsolDiag (module and parameter names in upper case). Set the console buffer to 300 x 1000 first.",
+      "cost": "high",
+      "risk": "Read Only",
+      "sources": [
+        "NK-1000-0176 §8.5.2.4"
+      ],
+      "options": [
+        {
+          "id": "yes",
+          "label": "Yes",
+          "effects": [
+            {
+              "hypothesis": "notify_stale",
+              "effect": "weakens",
+              "strength": "weak"
+            }
+          ]
+        },
+        {
+          "id": "no",
+          "label": "No",
+          "effects": [
+            {
+              "hypothesis": "notify_stale",
+              "effect": "supports",
+              "strength": "strong"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

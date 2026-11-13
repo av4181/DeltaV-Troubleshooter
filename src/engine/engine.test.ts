@@ -76,3 +76,34 @@ describe("knowledge base", () => {
     expect(result.issues.filter((i) => i.severity === "warning")).toEqual([]);
   });
 });
+
+describe("operate knowledge", () => {
+  const operateNodes = Object.values(kb).filter((n) => n.id.startsWith("operate."));
+
+  it("is reachable from the root", () => {
+    const rootAnswer = kb["root"];
+    expect(rootAnswer?.type).toBe("question");
+    if (rootAnswer?.type === "question") {
+      expect(rootAnswer.answers.some((a) => a.next === "operate.symptom")).toBe(true);
+    }
+  });
+
+  it("cites its source on every node", () => {
+    for (const node of operateNodes) {
+      expect(node.sources?.length, node.id).toBeGreaterThan(0);
+    }
+  });
+
+  it("uses the Operate domain except for the OS checklist", () => {
+    for (const node of operateNodes) {
+      expect(["Operate", "WindowsOS"], node.id).toContain(node.domain);
+    }
+  });
+
+  it("covers every symptom category of section 8", () => {
+    const symptom = kb["operate.symptom"];
+    expect(symptom?.type).toBe("question");
+    if (symptom?.type === "question") expect(symptom.answers.length).toBe(7);
+  });
+});
+
