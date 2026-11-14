@@ -62,6 +62,8 @@ export const observationSchema = z.object({
   options: z.array(optionSchema).min(2),
   sources: z.array(z.string().min(1)).optional(),
   verified: z.boolean().optional(),
+  /** Log catalog entries where this answer can be found. */
+  logs: z.array(z.string().min(1)).optional(),
 });
 
 export const hypothesisSchema = z.object({
@@ -76,6 +78,8 @@ export const hypothesisSchema = z.object({
   actions: z.array(z.string().min(1)).optional(),
   sources: z.array(z.string().min(1)).min(1),
   verified: z.boolean().optional(),
+  /** Log catalog entries that confirm or refute this hypothesis. */
+  logs: z.array(z.string().min(1)).optional(),
 });
 
 export const hypothesisFileSchema = z.object({

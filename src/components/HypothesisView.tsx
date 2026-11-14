@@ -3,6 +3,7 @@ import { useReducer } from "react";
 import { evaluate, initialState, reducer, suggestNext } from "../hypotheses/engine.ts";
 import type { Level, Ranked, Reason } from "../hypotheses/engine.ts";
 import type { HypothesisFile, Observation } from "../hypotheses/schema.ts";
+import LogList from "./LogList";
 
 interface Props {
   file: HypothesisFile;
@@ -183,6 +184,8 @@ function HypothesisRow({
           </>
         )}
 
+        <LogList ids={hypothesis.logs} />
+
         <p style={{ fontSize: "0.85rem", color: "#666" }}>Sources: {hypothesis.sources.join(", ")}</p>
 
         {onExclude && <button onClick={onExclude}>Rule out</button>}
@@ -217,6 +220,7 @@ function ObservationRow({
         <span style={chip}>Risk: {observation.risk}</span>
       </div>
       {observation.howTo && <div style={{ color: "#666", fontSize: "0.9rem" }}>{observation.howTo}</div>}
+      <LogList ids={observation.logs} />
       <div style={{ marginTop: "0.4rem" }}>
         {observation.options.map((option) => (
           <button

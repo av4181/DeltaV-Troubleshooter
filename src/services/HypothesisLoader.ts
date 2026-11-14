@@ -2,12 +2,13 @@ import operateData from "../knowledge/hypotheses/operate-data.json";
 
 import { formatIssue } from "../knowledge/validate.ts";
 import { validateHypotheses } from "../hypotheses/validate.ts";
+import { knownLogIds } from "./LogCatalog.ts";
 import type { HypothesisFile } from "../hypotheses/schema.ts";
 
 /** Loads and validates the hypothesis sets. Throws a readable list on error. */
 export function loadHypothesisSets(): HypothesisFile[] {
   return [operateData].map((raw) => {
-    const result = validateHypotheses(raw);
+    const result = validateHypotheses(raw, { logIds: knownLogIds() });
     for (const issue of result.issues) {
       if (issue.severity === "warning") console.warn(formatIssue(issue));
     }

@@ -10,6 +10,11 @@
         "sub": "NK-1000-0176"
       },
       {
+        "label": "Which logs do I read or collect?",
+        "next": "logs.area",
+        "sub": "DeltaV Log Files Reference Guide"
+      },
+      {
         "label": "Controller Fault",
         "next": "controller_fault"
       },
@@ -157,7 +162,13 @@
       "Check the Software Updates KBA of your DeltaV version for a known Workspace termination hotfix"
     ],
     "next": "operate.crash.module",
-    "nextLabel": "I have the faulting module"
+    "nextLabel": "I have the faulting module",
+    "logs": [
+      "drwtsn32",
+      "event-viewer",
+      "hotfixes-log",
+      "workspace-dump"
+    ]
   },
   "operate.crash.module": {
     "id": "operate.crash.module",
@@ -208,6 +219,9 @@
     "sources": [
       "NK-1000-0176 §2.2.h, §8.1.4",
       "AP-0800-0053"
+    ],
+    "logs": [
+      "ifixpic-log"
     ]
   },
   "operate.crash.datetime": {
@@ -265,7 +279,12 @@
       "NK-1000-0176 §3.f-3.g, §8.1.2"
     ],
     "next": "operate.escalate",
-    "nextLabel": "Prepare escalation"
+    "nextLabel": "Prepare escalation",
+    "logs": [
+      "drwtsn32",
+      "event-viewer",
+      "workspace-dump"
+    ]
   },
   "operate.slow.cpu": {
     "id": "operate.slow.cpu",
@@ -404,6 +423,9 @@
     "sources": [
       "NK-1000-0176 §8.2.4, §8.5.2.3",
       "AP-0500-0075"
+    ],
+    "logs": [
+      "ifixpic-log"
     ]
   },
   "operate.slow.embedded_trend": {
@@ -493,6 +515,11 @@
     "sources": [
       "NK-1000-0176 §8.3.1, §8.3.4, §8.5.2",
       "AP-0700-0094"
+    ],
+    "logs": [
+      "event-viewer",
+      "diagnostics-log",
+      "integrity-history"
     ]
   },
   "operate.partial.isolate": {
@@ -512,6 +539,9 @@
     ],
     "sources": [
       "NK-1000-0176 §2.2.g, §8.3.2.g"
+    ],
+    "logs": [
+      "ifixpic-log"
     ]
   },
   "operate.partial.controls": {
@@ -571,7 +601,11 @@
       "Watch memory usage per process in Task Manager"
     ],
     "next": "operate.total.cause",
-    "nextLabel": "Continue to likely causes"
+    "nextLabel": "Continue to likely causes",
+    "logs": [
+      "event-viewer",
+      "hotfixes-log"
+    ]
   },
   "operate.total.cause": {
     "id": "operate.total.cause",
@@ -757,7 +791,11 @@
       "If the base services are not running, look for communication hotfixes"
     ],
     "next": "operate.escalate",
-    "nextLabel": "Still failing: escalate"
+    "nextLabel": "Still failing: escalate",
+    "logs": [
+      "regall-log",
+      "event-viewer"
+    ]
   },
   "operate.data.module": {
     "id": "operate.data.module",
@@ -816,7 +854,10 @@
       "OPCWatchit with server DeltaV.DVSysSvr: Device Read unchecked, type the path as in Operate including the type code such as F_ or A_, compare Value and Quality"
     ],
     "next": "operate.escalate",
-    "nextLabel": "Escalate with the tool output"
+    "nextLabel": "Escalate with the tool output",
+    "logs": [
+      "ocnwatchit"
+    ]
   },
   "operate.data.write": {
     "id": "operate.data.write",
@@ -1043,7 +1084,10 @@
       "Run DumpDataSources and fix all findings before deploying"
     ],
     "next": "operate.config",
-    "nextLabel": "Back to areas"
+    "nextLabel": "Back to areas",
+    "logs": [
+      "ifixpic-log"
+    ]
   },
   "operate.config.vba": {
     "id": "operate.config.vba",
@@ -1161,6 +1205,198 @@
       "Related DeltaV database or module export",
       "Related Operate pictures (GRF and Layout files for multi-monitor issues)",
       "Windows System and Application event logs and crash dumps"
+    ],
+    "logs": [
+      "event-viewer",
+      "hotfixes-log",
+      "workspace-dump",
+      "integrity-history",
+      "ifixpic-log"
+    ]
+  },
+  "logs.area": {
+    "id": "logs.area",
+    "type": "question",
+    "title": "Where do you need evidence?",
+    "description": "Logs and the Event Viewer are the structured way to find a root cause. Pick the area of the problem to see which logs to read or collect and what to watch out for.",
+    "riskLevel": "Read Only",
+    "sources": [
+      "DeltaV Log Files Reference Guide"
+    ],
+    "answers": [
+      {
+        "label": "Install, upgrade or migration problem",
+        "next": "logs.install-upgrade"
+      },
+      {
+        "label": "Application or workstation crash",
+        "next": "logs.crash"
+      },
+      {
+        "label": "Download, upload, import, export or version control problem",
+        "next": "logs.engineering"
+      },
+      {
+        "label": "Controller or SIS hardware problem",
+        "next": "logs.controller"
+      },
+      {
+        "label": "Batch, Campaign Manager or Secure Write problem",
+        "next": "logs.batch"
+      },
+      {
+        "label": "OPC, historian, node discovery or fieldbus problem",
+        "next": "logs.connectivity"
+      },
+      {
+        "label": "DeltaV Operate or Diagnostics problem",
+        "next": "logs.operate"
+      },
+      {
+        "label": "Hotfix or SQL Server problem",
+        "next": "logs.sql-hotfix"
+      }
+    ]
+  },
+  "logs.install-upgrade": {
+    "id": "logs.install-upgrade",
+    "type": "terminal",
+    "title": "Install, upgrade and migration logs",
+    "description": "Read these when an installation, upgrade or FHX migration misbehaves.",
+    "riskLevel": "Read Only",
+    "logs": [
+      "install-logs",
+      "hardlock-setup",
+      "fix-setup",
+      "regall-log",
+      "uninstdv-log",
+      "upgrade-log",
+      "dvbackuprestore",
+      "dvmig",
+      "license-migration-errors"
+    ],
+    "sources": [
+      "DeltaV Log Files Reference Guide"
+    ]
+  },
+  "logs.crash": {
+    "id": "logs.crash",
+    "type": "terminal",
+    "title": "Crash evidence: Dr. Watson and Event Viewer",
+    "description": "Collect these when applications close or workstations lock up.",
+    "riskLevel": "Read Only",
+    "logs": [
+      "drwtsn32",
+      "event-viewer",
+      "workspace-dump"
+    ],
+    "sources": [
+      "DeltaV Log Files Reference Guide"
+    ]
+  },
+  "logs.engineering": {
+    "id": "logs.engineering",
+    "type": "terminal",
+    "title": "Engineering action logs",
+    "description": "These capture the output of large DeltaV Explorer and Database Administrator actions.",
+    "riskLevel": "Read Only",
+    "logs": [
+      "download-progress",
+      "verify-log",
+      "upload-progress",
+      "ifs-log",
+      "import-export-progress",
+      "daily-export-progress",
+      "daily-runtime-backup",
+      "vcat-files"
+    ],
+    "sources": [
+      "DeltaV Log Files Reference Guide"
+    ]
+  },
+  "logs.controller": {
+    "id": "logs.controller",
+    "type": "terminal",
+    "title": "Controller and SIS logs",
+    "description": "For controllers that lock up, switch over or behave abnormally.",
+    "riskLevel": "Read Only",
+    "logs": [
+      "controller-telnet",
+      "sis-logic-solver",
+      "runtime-recorder"
+    ],
+    "sources": [
+      "DeltaV Log Files Reference Guide"
+    ],
+    "domain": "Controller"
+  },
+  "logs.batch": {
+    "id": "logs.batch",
+    "type": "terminal",
+    "title": "Batch and Campaign Manager logs",
+    "description": "Collect from the Batch Executive and from the Batch Clients.",
+    "riskLevel": "Read Only",
+    "logs": [
+      "batch-logs",
+      "batch-journals",
+      "batch-backup",
+      "cm-journal",
+      "sis-secure-write"
+    ],
+    "sources": [
+      "DeltaV Log Files Reference Guide"
+    ],
+    "domain": "Batch"
+  },
+  "logs.connectivity": {
+    "id": "logs.connectivity",
+    "type": "terminal",
+    "title": "Connectivity and data-exchange logs",
+    "description": "For OPC A&E, PI, the Continuous Historian, Yellow Pages, fieldbus and On Change Notification.",
+    "riskLevel": "Read Only",
+    "logs": [
+      "opc-ae-client",
+      "dvpi-files",
+      "badscanitems",
+      "dvchdump",
+      "dvch-trace",
+      "yellowpages-log",
+      "fbus-monitor",
+      "ocnwatchit"
+    ],
+    "sources": [
+      "DeltaV Log Files Reference Guide"
+    ]
+  },
+  "logs.operate": {
+    "id": "logs.operate",
+    "type": "terminal",
+    "title": "DeltaV Operate logs",
+    "description": "Graphic save warnings, Diagnostics start/stop and the Integrity History.",
+    "riskLevel": "Read Only",
+    "logs": [
+      "ifixpic-log",
+      "diagnostics-log",
+      "integrity-history",
+      "workspace-dump"
+    ],
+    "sources": [
+      "DeltaV Log Files Reference Guide"
+    ],
+    "domain": "Operate"
+  },
+  "logs.sql-hotfix": {
+    "id": "logs.sql-hotfix",
+    "type": "terminal",
+    "title": "Hotfix and SQL Server logs",
+    "description": "Which hotfixes are active, and how SQL Server for Batch, PHV and AMS was installed.",
+    "riskLevel": "Read Only",
+    "logs": [
+      "hotfixes-log",
+      "sql-install-logs"
+    ],
+    "sources": [
+      "DeltaV Log Files Reference Guide"
     ]
   }
 }

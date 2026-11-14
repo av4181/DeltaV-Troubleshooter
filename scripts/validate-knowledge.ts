@@ -3,9 +3,25 @@ import { join } from "node:path";
 
 import { formatIssue, validateKnowledge } from "../src/knowledge/validate.ts";
 import { validateHypotheses } from "../src/hypotheses/validate.ts";
+import { validateLogs } from "../src/logs/validate.ts";
 
 const KNOWLEDGE_DIR = join(import.meta.dirname, "..", "src", "knowledge");
 const strict = process.argv.includes("--strict");
+
+const LOGS_DIR = join(KNOWLEDGE_DIR, "logs");
+const logIds = new Set<string>();
+let logErrors = 0;
+let logWarnings = 0;
+for (const file of readdirSync(LOGS_DIR).filter((name) => name.endsWith(".json"))) {
+  const result = validateLogs(JSON.parse(readFileSync(join(LOGS_DIR, file), "utf-8")));
+  for (const issue of result.issues) {
+    console.error(`logs/${file}: ${formatIssue(issue)}`);
+    if (issue.severity === "error") logErrors++;
+    else logWarnings++;
+  }
+  for (const log of result.data?.logs ?? []) logIds.add(log.id);
+  if (result.data) console.log(`logs/${file}: ${result.data.logs.length} entries OK`);
+}
 
 const files = readdirSync(KNOWLEDGE_DIR).filter((name) => name.endsWith(".json"));
 
@@ -14,8 +30,8 @@ if (files.length === 0) {
   process.exit(1);
 }
 
-let errors = 0;
-let warnings = 0;
+let errors = logErrors;
+let warnings = logWarnings;
 
 for (const file of files) {
   let raw: unknown;
@@ -27,7 +43,7 @@ for (const file of files) {
     continue;
   }
 
-  const result = validateKnowledge(raw);
+  const result = validateKnowledge(raw, { logIds });
   const nodeCount = raw && typeof raw === "object" ? Object.keys(raw).length : 0;
 
   for (const issue of result.issues) {
@@ -50,7 +66,7 @@ for (const file of readdirSync(HYPOTHESES_DIR).filter((name) => name.endsWith(".
     errors++;
     continue;
   }
-  const result = validateHypotheses(raw);
+  const result = validateHypotheses(raw, { logIds });
   for (const issue of result.issues) {
     console.error(`${label}: ${formatIssue(issue)}`);
     if (issue.severity === "error") errors++;

@@ -1,4 +1,5 @@
 import type { Node } from "../models/Node";
+import LogList from "./LogList";
 
 interface Props {
   node: Node;
@@ -31,6 +32,7 @@ export default function NodeMeta({ node }: Props) {
           Sources: {node.sources.join(", ")}
         </p>
       )}
+      <LogList ids={node.logs} />
     </div>
   );
 }

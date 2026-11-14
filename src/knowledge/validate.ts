@@ -1,3 +1,4 @@
+import { unknownLogRefs } from "../logs/validate.ts";
 import { knowledgeBaseSchema } from "../models/schema.ts";
 import type { KnowledgeBase, Node } from "../models/schema.ts";
 
@@ -39,7 +40,10 @@ export function nextIds(node: Node): string[] {
  * Errors make the knowledge base unusable. Warnings point at content that
  * works but is probably a mistake (unreachable nodes, trapped loops).
  */
-export function validateKnowledge(raw: unknown): ValidationResult {
+export function validateKnowledge(
+  raw: unknown,
+  options: { logIds?: ReadonlySet<string> } = {},
+): ValidationResult {
   const issues: ValidationIssue[] = [];
 
   const parsed = knowledgeBaseSchema.safeParse(raw);
@@ -72,6 +76,8 @@ export function validateKnowledge(raw: unknown): ValidationResult {
         message: `Key "${key}" does not match node id "${node.id}".`,
       });
     }
+
+    issues.push(...unknownLogRefs(key, node.logs, options.logIds));
 
     for (const target of nextIds(node)) {
       if (!(target in knowledge)) {

@@ -21,6 +21,10 @@
       ],
       "sources": [
         "NK-1000-0176 §8.5.2.1"
+      ],
+      "logs": [
+        "event-viewer",
+        "regall-log"
       ]
     },
     {
@@ -37,6 +41,9 @@
       ],
       "sources": [
         "NK-1000-0176 §8.5.2.1"
+      ],
+      "logs": [
+        "event-viewer"
       ]
     },
     {
@@ -54,6 +61,10 @@
       "sources": [
         "NK-1000-0176 §8.3.1, §8.5.4",
         "AP-0700-0094"
+      ],
+      "logs": [
+        "integrity-history",
+        "event-viewer"
       ]
     },
     {
@@ -102,6 +113,9 @@
         "NK-1000-0176 §8.2.4, §8.5.2.3, §8.5.4",
         "AP-0500-0075",
         "AP-0800-0053"
+      ],
+      "logs": [
+        "ifixpic-log"
       ]
     },
     {
@@ -137,6 +151,9 @@
       ],
       "sources": [
         "NK-1000-0176 §8.5.2.4"
+      ],
+      "logs": [
+        "ocnwatchit"
       ]
     },
     {
@@ -448,6 +465,9 @@
             }
           ]
         }
+      ],
+      "logs": [
+        "regall-log"
       ]
     },
     {
@@ -482,6 +502,10 @@
             }
           ]
         }
+      ],
+      "logs": [
+        "event-viewer",
+        "regall-log"
       ]
     },
     {
@@ -560,6 +584,9 @@
             }
           ]
         }
+      ],
+      "logs": [
+        "integrity-history"
       ]
     },
     {
@@ -727,6 +754,9 @@
             }
           ]
         }
+      ],
+      "logs": [
+        "ifixpic-log"
       ]
     },
     {
@@ -954,6 +984,9 @@
             }
           ]
         }
+      ],
+      "logs": [
+        "ocnwatchit"
       ]
     },
     {
@@ -988,6 +1021,9 @@
             }
           ]
         }
+      ],
+      "logs": [
+        "ocnwatchit"
       ]
     }
   ]

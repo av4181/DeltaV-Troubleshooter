@@ -80,6 +80,8 @@ const baseFields = {
   sources: z.array(z.string().min(1)).optional(),
   /** Set to false when a claim could not be confirmed against a source. */
   verified: z.boolean().optional(),
+  /** Ids of log catalog entries to read or collect at this point. */
+  logs: z.array(z.string().min(1)).optional(),
 };
 
 /** A decision point: the user picks one answer. */

@@ -1,5 +1,6 @@
 import { hypothesisFileSchema } from "./schema.ts";
 import type { HypothesisFile } from "./schema.ts";
+import { unknownLogRefs } from "../logs/validate.ts";
 import type { ValidationIssue } from "../knowledge/validate.ts";
 
 export interface HypothesisValidation {
@@ -19,7 +20,10 @@ function duplicates(ids: readonly string[]): string[] {
 }
 
 /** Structure first, then cross references between observations and hypotheses. */
-export function validateHypotheses(raw: unknown): HypothesisValidation {
+export function validateHypotheses(
+  raw: unknown,
+  options: { logIds?: ReadonlySet<string> } = {},
+): HypothesisValidation {
   const issues: ValidationIssue[] = [];
 
   const parsed = hypothesisFileSchema.safeParse(raw);
@@ -42,7 +46,12 @@ export function validateHypotheses(raw: unknown): HypothesisValidation {
 
   const influenced = new Set<string>();
 
+  for (const hypothesis of data.hypotheses) {
+    issues.push(...unknownLogRefs(hypothesis.id, hypothesis.logs, options.logIds));
+  }
+
   for (const observation of data.observations) {
+    issues.push(...unknownLogRefs(observation.id, observation.logs, options.logIds));
     for (const id of duplicates(observation.options.map((o) => o.id))) {
       issues.push({
         severity: "error",
