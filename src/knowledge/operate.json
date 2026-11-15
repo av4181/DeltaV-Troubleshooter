@@ -1,33 +1,4 @@
 {
-  "root": {
-    "id": "root",
-    "type": "question",
-    "title": "What is the primary symptom?",
-    "answers": [
-      {
-        "label": "DeltaV Operate (operator display) problem",
-        "next": "operate.symptom",
-        "sub": "NK-1000-0176"
-      },
-      {
-        "label": "Which logs do I read or collect?",
-        "next": "logs.area",
-        "sub": "DeltaV Log Files Reference Guide"
-      },
-      {
-        "label": "Controller Fault",
-        "next": "controller_fault"
-      },
-      {
-        "label": "I/O Bad Status",
-        "next": "io_bad"
-      },
-      {
-        "label": "Communication Issue",
-        "next": "comm_issue"
-      }
-    ]
-  },
   "controller_fault": {
     "id": "controller_fault",
     "type": "question",
@@ -1255,6 +1226,10 @@
       {
         "label": "Hotfix or SQL Server problem",
         "next": "logs.sql-hotfix"
+      },
+      {
+        "label": "Services, accounts, or what changed on the machine",
+        "next": "logs.services-accounts"
       }
     ]
   },
@@ -1397,6 +1372,426 @@
     ],
     "sources": [
       "DeltaV Log Files Reference Guide"
+    ]
+  },
+  "general.symptom": {
+    "id": "general.symptom",
+    "type": "question",
+    "title": "Which kind of symptom is it?",
+    "answers": [
+      {
+        "label": "Controller Fault",
+        "next": "controller_fault"
+      },
+      {
+        "label": "I/O Bad Status",
+        "next": "io_bad"
+      },
+      {
+        "label": "Communication Issue",
+        "next": "comm_issue"
+      }
+    ]
+  },
+  "root": {
+    "id": "root",
+    "type": "question",
+    "title": "What is the customer reporting?",
+    "description": "Describe it the way the customer does. You do not need to know the cause or the layer yet, and the customer does not have to tell you what they changed.",
+    "answers": [
+      {
+        "label": "A DeltaV application does not work, will not start or shows an error",
+        "next": "app.which",
+        "sub": "for example DeltaV Live, Operate, Explorer, Diagnostics"
+      },
+      {
+        "label": "It stopped working after a change on the machine",
+        "next": "change.what",
+        "sub": "new station, reconfiguration, reinstall, upgrade, patch, account or policy change"
+      },
+      {
+        "label": "A value, alarm or animation on an operator display is wrong or missing",
+        "next": "operate.data.scope",
+        "sub": "NK-1000-0176"
+      },
+      {
+        "label": "DeltaV Operate freezes, crashes or is slow",
+        "next": "operate.symptom",
+        "sub": "NK-1000-0176"
+      },
+      {
+        "label": "Something with a controller, I/O or the network",
+        "next": "general.symptom"
+      },
+      {
+        "label": "I only need to know which logs or tools to use",
+        "next": "logs.area"
+      }
+    ]
+  },
+  "app.which": {
+    "id": "app.which",
+    "type": "question",
+    "title": "Which application does not work?",
+    "description": "Pick the closest one. The next step is the same for all of them: do its services run?",
+    "layer": "application",
+    "answers": [
+      {
+        "label": "DeltaV Live (displays, Graphics Studio, Live Administration)",
+        "next": "app.live.services"
+      },
+      {
+        "label": "DeltaV Operate",
+        "next": "operate.symptom",
+        "sub": "NK-1000-0176"
+      },
+      {
+        "label": "Another DeltaV application, or I am not sure",
+        "next": "app.generic.services"
+      }
+    ]
+  },
+  "app.live.services": {
+    "id": "app.live.services",
+    "type": "step",
+    "title": "Do the DeltaV Live services run?",
+    "description": "Open services.msc, sort or filter on DeltaV and compare with a working operator station of the same version. Compare against that station instead of a remembered list of service names, which differ per version.",
+    "layer": "application",
+    "riskLevel": "Read Only",
+    "logs": [
+      "services-console"
+    ],
+    "sources": [
+      "Support case supplied by user (DeltaV Live down after workstation configuration, 2026-11-15)"
+    ],
+    "answers": [
+      {
+        "label": "Some are stopped and starting them fails, or the start type is Disabled",
+        "next": "app.services.why",
+        "sub": "go to: why do they not start?"
+      },
+      {
+        "label": "Some are missing from the list",
+        "next": "app.services.missing",
+        "sub": "compare with a working operator station"
+      },
+      {
+        "label": "All of them run, but the application still fails",
+        "next": "app.live.running"
+      },
+      {
+        "label": "I cannot tell yet",
+        "next": "app.services.howto"
+      }
+    ]
+  },
+  "app.generic.services": {
+    "id": "app.generic.services",
+    "type": "step",
+    "title": "Do the services of this application run?",
+    "description": "Open services.msc, sort or filter on DeltaV and compare with a working station of the same type and version.",
+    "layer": "application",
+    "riskLevel": "Read Only",
+    "logs": [
+      "services-console"
+    ],
+    "sources": [
+      "Support case supplied by user (DeltaV Live down after workstation configuration, 2026-11-15)"
+    ],
+    "answers": [
+      {
+        "label": "Some are stopped and starting them fails, or the start type is Disabled",
+        "next": "app.services.why",
+        "sub": "go to: why do they not start?"
+      },
+      {
+        "label": "Some are missing from the list",
+        "next": "app.services.missing",
+        "sub": "compare with a working operator station"
+      },
+      {
+        "label": "All of them run, but the application still fails",
+        "next": "app.generic.running"
+      },
+      {
+        "label": "I cannot tell yet",
+        "next": "app.services.howto"
+      }
+    ]
+  },
+  "app.services.howto": {
+    "id": "app.services.howto",
+    "type": "checklist",
+    "title": "How to check the services",
+    "layer": "application",
+    "riskLevel": "Read Only",
+    "logs": [
+      "services-console"
+    ],
+    "sources": [
+      "Support case supplied by user (DeltaV Live down after workstation configuration, 2026-11-15)"
+    ],
+    "items": [
+      "Open services.msc and sort on name or filter on DeltaV",
+      "Open the same list on a working operator station of the same version, and compare",
+      "Write down per service: present or missing, status, start type",
+      "For each service that is present but stopped, open Properties > Log On and note the account",
+      "Open Properties > Dependencies and note whether everything it depends on is present and running"
+    ],
+    "next": "app.which",
+    "nextLabel": "Back to the question"
+  },
+  "app.services.why": {
+    "id": "app.services.why",
+    "type": "terminal",
+    "title": "Find out why the services do not start",
+    "description": "A service that cannot start leaves a reason behind. Collect four facts before you guess: the exact time of your start attempt, the event ID and error text in the System log, the account the service logs on as, and what changed on the machine before it stopped working. Then enter them in hypothesis mode. It ranks the likely causes (account locked or disabled, missing logon right, failed dependency, wrong role, timing, crash) and shows which check separates them.",
+    "layer": "application",
+    "mechanism": "windows-os",
+    "riskLevel": "Read Only",
+    "hypothesisSet": "service-wont-start",
+    "logs": [
+      "scm-events",
+      "security-account-events",
+      "msi-installer-events",
+      "install-logs",
+      "regall-log",
+      "hotfixes-log",
+      "group-policy-results",
+      "local-security-policy",
+      "services-console"
+    ],
+    "sources": [
+      "Geoff Chappell: Service Control Manager events (geoffchappell.com/studies/windows/win32/services/scm/events/eventlog.htm)",
+      "Microsoft Learn: Error 1069 service cannot start (learn.microsoft.com/en-us/troubleshoot/sql/admin/error-1069-service-cannot-start)",
+      "Support case supplied by user (DeltaV Live down after workstation configuration, 2026-11-15)"
+    ],
+    "actions": [
+      "Try to start the service and note the exact time",
+      "Event Viewer > Windows Logs > System > Filter Current Log > event source Service Control Manager",
+      "Read the event at that time: 7038 or 7041 = logon problem. 7001 or 7002 = a dependency did not start. 7009, 7011 or 7022 = timeout or hang. 7023, 7024, 7031 or 7034 = it started and terminated. 7040 = the start type was changed",
+      "Write down the complete error text after the ID. For 7038 it says locked out, disabled, password or domain",
+      "Check the Security log for the account: 4625 on this workstation, 4740 on the domain controller",
+      "Find out what the customer did: Application log source MsiInstaller (1033 installed, 1034 removed), Hotfixes.log, install logs"
+    ]
+  },
+  "app.services.missing": {
+    "id": "app.services.missing",
+    "type": "terminal",
+    "title": "Services are missing: suspect the role or the installation",
+    "description": "A service that is not in the list cannot fail to log on or time out, so the account and timing causes drop out. Think of the role chosen in Workstation Configuration (for example terminal server instead of operator station), a workstation that was never downloaded from DeltaV Explorer, or a component that was removed. This comes from a support case and is not confirmed in an official KBA.",
+    "layer": "application",
+    "riskLevel": "Read Only",
+    "verified": false,
+    "hypothesisSet": "service-wont-start",
+    "logs": [
+      "services-console",
+      "install-logs",
+      "regall-log",
+      "msi-installer-events",
+      "hotfixes-log"
+    ],
+    "sources": [
+      "Support case supplied by user (DeltaV Live down after workstation configuration, 2026-11-15)"
+    ],
+    "actions": [
+      "Compare the node type and role of this station with the project design and with a working operator station",
+      "Compare the service list with a working operator station",
+      "Check what was installed or removed and when (Application log MsiInstaller, install logs, Regall.log)",
+      "Ask what the customer did, then verify it in the logs"
+    ]
+  },
+  "app.live.running": {
+    "id": "app.live.running",
+    "type": "terminal",
+    "title": "The services run, but DeltaV Live still fails",
+    "description": "Read the exact message first. The messages below come from community reports and are not an official KBA, so treat them as leads.",
+    "domain": "Live",
+    "layer": "application",
+    "riskLevel": "Read Only",
+    "verified": false,
+    "hypothesisSet": "service-wont-start",
+    "logs": [
+      "event-viewer",
+      "scm-events"
+    ],
+    "sources": [
+      "Emerson Exchange 365 community thread 9017: Cannot connect to database, DeltaV Live not opening",
+      "Emerson Exchange 365 community thread 9931: DeltaV Live Graphics Studio and Administration errors on startup",
+      "NK-1900-0543"
+    ],
+    "actions": [
+      "'Workstation Configuration necessary for this application to run cannot be found': check that the workstation was successfully downloaded from DeltaV Explorer",
+      "'Unable to initialize DeltaV Live. Verify that the Oe Application Server is running without errors': check Oe.Application.Server.exe in Task Manager and start it from C:\\Program Files (x86)\\Emerson\\DeltaV",
+      "'Unable to get active database, Rts error ItemNotFound': the active database is invalid, for example after a failed database switch",
+      "ADDB satellite database out of sync, for example after a VM snapshot or checkpoint was reverted: see NK-1900-0543 (DropSatelliteAddb)"
+    ]
+  },
+  "app.generic.running": {
+    "id": "app.generic.running",
+    "type": "terminal",
+    "title": "The services run, but the application still fails",
+    "description": "The cause is above the service level. Read the exact error message, then look at the Application log at the same timestamp and collect the evidence for the area.",
+    "layer": "application",
+    "riskLevel": "Read Only",
+    "logs": [
+      "event-viewer",
+      "scm-events"
+    ],
+    "sources": [
+      "Support case supplied by user (DeltaV Live down after workstation configuration, 2026-11-15)"
+    ]
+  },
+  "change.what": {
+    "id": "change.what",
+    "type": "question",
+    "title": "What changed on the machine?",
+    "description": "The customer does not always tell you. Ask, then verify in the logs, because the timestamps do not lie.",
+    "layer": "application",
+    "sources": [
+      "Support case supplied by user (DeltaV Live down after workstation configuration, 2026-11-15)"
+    ],
+    "answers": [
+      {
+        "label": "Workstation Configuration was run again, or a new station was put in service",
+        "next": "change.workstation_config"
+      },
+      {
+        "label": "Software was installed, upgraded or patched",
+        "next": "change.software"
+      },
+      {
+        "label": "An account, a password or a group policy was changed",
+        "next": "change.accounts"
+      },
+      {
+        "label": "A virtual machine was reverted, restored or moved",
+        "next": "change.vm"
+      },
+      {
+        "label": "I do not know: find out from the logs",
+        "next": "logs.services-accounts"
+      }
+    ]
+  },
+  "change.workstation_config": {
+    "id": "change.workstation_config",
+    "type": "terminal",
+    "title": "A workstation configuration was (re)run",
+    "description": "Running Workstation Configuration again can change the role of the station and with it the services that belong to it. In a support case a terminal server role was chosen instead of operator station, after which DeltaV Live no longer worked. The customer often does not mention this. This comes from a support case and is not confirmed in an official KBA.",
+    "layer": "application",
+    "riskLevel": "Read Only",
+    "verified": false,
+    "hypothesisSet": "service-wont-start",
+    "logs": [
+      "install-logs",
+      "regall-log",
+      "msi-installer-events",
+      "hotfixes-log",
+      "services-console"
+    ],
+    "sources": [
+      "Support case supplied by user (DeltaV Live down after workstation configuration, 2026-11-15)"
+    ],
+    "actions": [
+      "Ask which role was chosen",
+      "Compare the node type and the services with a working operator station",
+      "Check install logs, Regall.log and the Application log (MsiInstaller) around that time",
+      "Enter what you found in hypothesis mode"
+    ]
+  },
+  "change.software": {
+    "id": "change.software",
+    "type": "terminal",
+    "title": "Software was installed, upgraded or patched",
+    "description": "Match the time of the change with the time the problem started.",
+    "layer": "application",
+    "riskLevel": "Read Only",
+    "logs": [
+      "install-logs",
+      "upgrade-log",
+      "hotfixes-log",
+      "msi-installer-events",
+      "regall-log"
+    ],
+    "sources": [
+      "DeltaV Log Files Reference Guide"
+    ],
+    "actions": [
+      "Check the install and upgrade logs for the time of the change",
+      "Check Hotfixes.log for what is really installed on this node",
+      "Check Regall.log to see whether the services registered"
+    ]
+  },
+  "change.accounts": {
+    "id": "change.accounts",
+    "type": "terminal",
+    "title": "An account, a password or a group policy was changed",
+    "description": "A changed password, a locked account or a policy that removes the 'Log on as a service' right stops services from starting.",
+    "layer": "application",
+    "mechanism": "windows-os",
+    "riskLevel": "Read Only",
+    "hypothesisSet": "service-wont-start",
+    "logs": [
+      "scm-events",
+      "security-account-events",
+      "group-policy-results",
+      "local-security-policy"
+    ],
+    "sources": [
+      "Microsoft Learn: Error 1069 service cannot start (learn.microsoft.com/en-us/troubleshoot/sql/admin/error-1069-service-cannot-start)",
+      "Support case supplied by user (DeltaV Live down after workstation configuration, 2026-11-15)"
+    ],
+    "actions": [
+      "System log: event 7038 or 7041 at the moment of the failed start",
+      "Security log: 4625 on this station, 4740 on the domain controller",
+      "Check which policies apply (gpresult) and the user rights (secpol.msc)"
+    ]
+  },
+  "change.vm": {
+    "id": "change.vm",
+    "type": "terminal",
+    "title": "A virtual machine was reverted, restored or moved",
+    "description": "Reverting a snapshot or checkpoint can leave the DeltaV Live satellite database (ADDB) out of sync with the rest of the system. NK-1900-0543 describes the DropSatelliteAddb utility. Recheck the details in the KBA before acting.",
+    "domain": "Live",
+    "layer": "application",
+    "riskLevel": "Read Only",
+    "verified": false,
+    "hypothesisSet": "service-wont-start",
+    "logs": [
+      "event-viewer"
+    ],
+    "sources": [
+      "NK-1900-0543"
+    ],
+    "actions": [
+      "Find out when the snapshot or checkpoint was reverted",
+      "Read NK-1900-0543 before using the DropSatelliteAddb utility"
+    ]
+  },
+  "logs.services-accounts": {
+    "id": "logs.services-accounts",
+    "type": "terminal",
+    "title": "Evidence for services, accounts and what changed on the machine",
+    "description": "Start with the Service Control Manager events, then the account events, then what was installed or changed.",
+    "domain": "WindowsOS",
+    "layer": "application",
+    "riskLevel": "Read Only",
+    "logs": [
+      "scm-events",
+      "security-account-events",
+      "msi-installer-events",
+      "group-policy-results",
+      "services-console",
+      "local-security-policy",
+      "install-logs",
+      "regall-log",
+      "hotfixes-log",
+      "event-viewer"
+    ],
+    "sources": [
+      "DeltaV Log Files Reference Guide",
+      "Geoff Chappell: Service Control Manager events (geoffchappell.com/studies/windows/win32/services/scm/events/eventlog.htm)"
     ]
   }
 }

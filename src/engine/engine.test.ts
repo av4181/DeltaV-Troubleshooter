@@ -65,7 +65,7 @@ describe("engine", () => {
     const s = run(initialState(), { type: "navigate", to: "controller_fault" });
     expect(currentNode(s, kb)?.title).toBe("Is the controller redundant?");
     expect(crumbs(s, kb).map((c) => c.title)).toEqual([
-      "What is the primary symptom?",
+      "What is the customer reporting?",
       "Is the controller redundant?",
     ]);
   });

@@ -1,0 +1,1149 @@
+{
+  "meta": {
+    "id": "service-wont-start",
+    "title": "A DeltaV application does not work: services will not start, or its configuration is wrong (for example DeltaV Live)",
+    "priorsReviewed": false
+  },
+  "hypotheses": [
+    {
+      "id": "account_unusable",
+      "title": "The service account is locked out, disabled, expired or has a wrong password",
+      "description": "The service cannot log on. Event 7038 names the reason in its error text, and Windows reports error 1069 when you start it by hand.",
+      "domain": "WindowsOS",
+      "layer": "application",
+      "mechanism": "windows-os",
+      "prior": "possible",
+      "actions": [
+        "Read the error text after event 7038 and the Security log (4625 on this station, 4740 on the domain controller)",
+        "Find out what locked the account before you unlock it: Caller Computer Name in event 4740",
+        "Unlock or enable the account, or correct the password, in Computer Management (local) or Active Directory (domain)",
+        "If the password changed, update it in the service (Services > Properties > Log On)"
+      ],
+      "logs": [
+        "scm-events",
+        "security-account-events",
+        "services-console"
+      ],
+      "sources": [
+        "Microsoft Learn: Error 1069 service cannot start (learn.microsoft.com/en-us/troubleshoot/sql/admin/error-1069-service-cannot-start)",
+        "Microsoft Learn: Event 4625, an account failed to log on (learn.microsoft.com/windows/security/threat-protection/auditing/event-4625)",
+        "Petri: Account lockout event ID 4740 (petri.com/?p=774221)"
+      ]
+    },
+    {
+      "id": "logon_right",
+      "title": "The service account lacks the 'Log on as a service' right, or is denied it",
+      "description": "Event 7041, and Security sub status 0xC000015B. Typical after a group policy or hardening change.",
+      "domain": "WindowsOS",
+      "layer": "application",
+      "mechanism": "windows-os",
+      "prior": "unlikely",
+      "actions": [
+        "secpol.msc > Local Policies > User Rights Assignment: add the account to 'Log on as a service', remove it from 'Deny log on as a service'",
+        "Compare with gpresult: a domain policy can overwrite the local setting"
+      ],
+      "logs": [
+        "local-security-policy",
+        "group-policy-results",
+        "scm-events"
+      ],
+      "sources": [
+        "Microsoft Learn: Error 1069 service cannot start (learn.microsoft.com/en-us/troubleshoot/sql/admin/error-1069-service-cannot-start)",
+        "Microsoft Learn: Event 4625, an account failed to log on (learn.microsoft.com/windows/security/threat-protection/auditing/event-4625)"
+      ]
+    },
+    {
+      "id": "domain_unreachable",
+      "title": "A domain controller could not be contacted when the service started",
+      "description": "The service logs on with a domain account, but the network or domain was not available yet at boot. Event 7038 says the specified domain does not exist or could not be contacted, and the service starts fine by hand later.",
+      "domain": "Network",
+      "layer": "network",
+      "mechanism": "windows-os",
+      "prior": "unlikely",
+      "actions": [
+        "Check that this workstation reaches a domain controller at boot (network, DNS, switch port)",
+        "Compare the time of the failed start with the time the network came up"
+      ],
+      "logs": [
+        "scm-events"
+      ],
+      "sources": [
+        "Microsoft Learn: Error 1069 service cannot start (learn.microsoft.com/en-us/troubleshoot/sql/admin/error-1069-service-cannot-start)"
+      ]
+    },
+    {
+      "id": "dependency_failed",
+      "title": "A service this one depends on is stopped, disabled or missing",
+      "description": "Event 7001 (a dependency failed to start) or 7002 (no member of a dependency group started).",
+      "domain": "WindowsOS",
+      "layer": "application",
+      "mechanism": "windows-os",
+      "prior": "possible",
+      "actions": [
+        "Services > Properties > Dependencies: start the failing dependency first and read its own event 7000 or 7038",
+        "Treat the dependency as the real problem and apply this analysis to it"
+      ],
+      "logs": [
+        "scm-events",
+        "services-console"
+      ],
+      "sources": [
+        "Geoff Chappell: Service Control Manager events (geoffchappell.com/studies/windows/win32/services/scm/events/eventlog.htm)"
+      ]
+    },
+    {
+      "id": "wrong_role",
+      "title": "The station was configured with the wrong role (for example terminal server instead of operator station)",
+      "description": "The role chosen in Workstation Configuration does not match the purpose of the station, so the services of an operator station are missing, not configured, or disabled. Seen in a support case where DeltaV Live stopped working after the customer re-ran the workstation configuration. The exact mechanism is not confirmed in any source.",
+      "domain": "Live",
+      "layer": "application",
+      "prior": "possible",
+      "verified": false,
+      "actions": [
+        "Compare the node type and role of this station with the project design and with a working operator station",
+        "Compare the list of DeltaV services with a working operator station",
+        "If the role is wrong, correct it by running Workstation Configuration again with the right role. Confirm the procedure for your version with Emerson first"
+      ],
+      "logs": [
+        "install-logs",
+        "regall-log",
+        "msi-installer-events",
+        "hotfixes-log",
+        "services-console"
+      ],
+      "sources": [
+        "Support case supplied by user (DeltaV Live down after workstation configuration, 2026-11-15)"
+      ]
+    },
+    {
+      "id": "not_downloaded",
+      "title": "The workstation was not (successfully) downloaded from DeltaV Explorer, so its configuration cannot be found",
+      "description": "DeltaV Live Database Administration reported: 'Workstation Configuration necessary for this application to run cannot be found. Please verify this workstation has been successfully downloaded from DeltaV Explorer'. A community report on v14.3, where restarting the DeltaV services cleared it. Not confirmed in an official KBA.",
+      "domain": "Live",
+      "layer": "application",
+      "prior": "possible",
+      "verified": false,
+      "actions": [
+        "Check that the station is defined in DeltaV Explorer with the right type",
+        "Download the workstation and check the download result"
+      ],
+      "logs": [
+        "download-progress",
+        "install-logs"
+      ],
+      "sources": [
+        "Emerson Exchange 365 community thread 9017: Cannot connect to database, DeltaV Live not opening"
+      ]
+    },
+    {
+      "id": "start_timeout",
+      "title": "The service times out or hangs while starting",
+      "description": "Events 7009 and 7011 (timeout waiting for the service) or 7022 (the service hung on starting).",
+      "domain": "WindowsOS",
+      "layer": "application",
+      "mechanism": "windows-os",
+      "prior": "unlikely",
+      "actions": [
+        "Note the time between the start attempt and the event",
+        "Check load on the station and whether a dependency starts late"
+      ],
+      "logs": [
+        "scm-events"
+      ],
+      "sources": [
+        "Geoff Chappell: Service Control Manager events (geoffchappell.com/studies/windows/win32/services/scm/events/eventlog.htm)"
+      ]
+    },
+    {
+      "id": "crash_on_start",
+      "title": "The service starts, then terminates or fails to initialize",
+      "description": "Events 7023, 7024, 7031 or 7034, or an application that reports it cannot initialize. The community reports 'Unable to initialize DeltaV Live. Verify that the Oe Application Server is running without errors', where Oe.Application.Server.exe was stopped in Task Manager and started again from C:\\Program Files (x86)\\Emerson\\DeltaV.",
+      "domain": "Live",
+      "layer": "application",
+      "prior": "possible",
+      "verified": false,
+      "actions": [
+        "Look in the Application log for errors at the same timestamp",
+        "Check Task Manager for the process the application needs and start it from its installed location (community report)"
+      ],
+      "logs": [
+        "scm-events",
+        "event-viewer"
+      ],
+      "sources": [
+        "Geoff Chappell: Service Control Manager events (geoffchappell.com/studies/windows/win32/services/scm/events/eventlog.htm)",
+        "Emerson Exchange 365 community thread 9931: DeltaV Live Graphics Studio and Administration errors on startup"
+      ]
+    },
+    {
+      "id": "database_unavailable",
+      "title": "The DeltaV Live database is unavailable or out of sync",
+      "description": "The active database is invalid after a failed database switch ('Unable to get active database, Rts error ItemNotFound', community report), or the ADDB satellite database is out of sync, for example after a VM snapshot or checkpoint was reverted.",
+      "domain": "Live",
+      "layer": "application",
+      "mechanism": "sql",
+      "prior": "unlikely",
+      "verified": false,
+      "actions": [
+        "Check the active database in DeltaV Live Administration",
+        "For an ADDB satellite out of sync with the system, see NK-1900-0543 (DropSatelliteAddb utility)"
+      ],
+      "logs": [
+        "event-viewer"
+      ],
+      "sources": [
+        "NK-1900-0543",
+        "Emerson Exchange 365 community thread 9931: DeltaV Live Graphics Studio and Administration errors on startup"
+      ]
+    },
+    {
+      "id": "service_disabled",
+      "title": "The service start type was set to Disabled or otherwise changed",
+      "description": "Something changed the start type: a hardening script, a policy, or a person. Event 7040 shows the old and the new start type.",
+      "domain": "WindowsOS",
+      "layer": "application",
+      "mechanism": "windows-os",
+      "prior": "unlikely",
+      "actions": [
+        "Check event 7040 for the time of the change",
+        "Find out what ran at that time before you set the start type back"
+      ],
+      "logs": [
+        "scm-events",
+        "group-policy-results",
+        "services-console"
+      ],
+      "sources": [
+        "Geoff Chappell: Service Control Manager events (geoffchappell.com/studies/windows/win32/services/scm/events/eventlog.htm)"
+      ]
+    }
+  ],
+  "observations": [
+    {
+      "id": "services_state",
+      "question": "What do you see when you compare the services with a working operator station?",
+      "howTo": "services.msc, sort or filter on DeltaV, compare with a working operator station of the same version. Note status and start type.",
+      "cost": "low",
+      "risk": "Read Only",
+      "logs": [
+        "services-console"
+      ],
+      "sources": [
+        "Support case supplied by user (DeltaV Live down after workstation configuration, 2026-11-15)"
+      ],
+      "options": [
+        {
+          "id": "stopped_fails",
+          "label": "Present, stopped, and starting them fails",
+          "effects": [
+            {
+              "hypothesis": "account_unusable",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "logon_right",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "dependency_failed",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "start_timeout",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "crash_on_start",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "database_unavailable",
+              "effect": "weakens",
+              "strength": "weak"
+            }
+          ]
+        },
+        {
+          "id": "disabled",
+          "label": "Present, but the start type is Disabled",
+          "effects": [
+            {
+              "hypothesis": "service_disabled",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "account_unusable",
+              "effect": "weakens",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "crash_on_start",
+              "effect": "weakens",
+              "strength": "weak"
+            }
+          ]
+        },
+        {
+          "id": "missing",
+          "label": "Some are missing from the list",
+          "effects": [
+            {
+              "hypothesis": "account_unusable",
+              "effect": "excludes",
+              "because": "A service that is not installed cannot fail to log on."
+            },
+            {
+              "hypothesis": "logon_right",
+              "effect": "excludes",
+              "because": "A service that is not installed has no logon right to be missing."
+            },
+            {
+              "hypothesis": "domain_unreachable",
+              "effect": "excludes",
+              "because": "A service that is not installed cannot fail to reach a domain at start."
+            },
+            {
+              "hypothesis": "start_timeout",
+              "effect": "excludes",
+              "because": "A service that is not installed cannot time out while starting."
+            },
+            {
+              "hypothesis": "crash_on_start",
+              "effect": "excludes",
+              "because": "A service that is not installed cannot terminate."
+            },
+            {
+              "hypothesis": "service_disabled",
+              "effect": "excludes",
+              "because": "A service that is not installed has no start type to be changed."
+            },
+            {
+              "hypothesis": "wrong_role",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "not_downloaded",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "dependency_failed",
+              "effect": "weakens",
+              "strength": "weak"
+            }
+          ]
+        },
+        {
+          "id": "running",
+          "label": "All run, but the application still fails",
+          "effects": [
+            {
+              "hypothesis": "account_unusable",
+              "effect": "weakens",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "logon_right",
+              "effect": "weakens",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "domain_unreachable",
+              "effect": "weakens",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "dependency_failed",
+              "effect": "weakens",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "start_timeout",
+              "effect": "weakens",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "service_disabled",
+              "effect": "weakens",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "database_unavailable",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "not_downloaded",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "crash_on_start",
+              "effect": "supports",
+              "strength": "weak"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scm_event",
+      "question": "Which Service Control Manager event appears in the System log at the moment you start the service?",
+      "howTo": "Event Viewer > Windows Logs > System > Filter Current Log > event source Service Control Manager. Match the timestamp with your start attempt and write down the complete text.",
+      "cost": "low",
+      "risk": "Read Only",
+      "logs": [
+        "scm-events"
+      ],
+      "sources": [
+        "Geoff Chappell: Service Control Manager events (geoffchappell.com/studies/windows/win32/services/scm/events/eventlog.htm)",
+        "Microsoft Learn: Error 1069 service cannot start (learn.microsoft.com/en-us/troubleshoot/sql/admin/error-1069-service-cannot-start)"
+      ],
+      "options": [
+        {
+          "id": "e7038",
+          "label": "7038: unable to log on with the configured password",
+          "effects": [
+            {
+              "hypothesis": "account_unusable",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "domain_unreachable",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "logon_right",
+              "effect": "supports",
+              "strength": "weak"
+            }
+          ]
+        },
+        {
+          "id": "e7041",
+          "label": "7041: logon type or 'Log on as a service' right not granted",
+          "effects": [
+            {
+              "hypothesis": "logon_right",
+              "effect": "supports",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "e7001",
+          "label": "7001 or 7002: a dependency did not start",
+          "effects": [
+            {
+              "hypothesis": "dependency_failed",
+              "effect": "supports",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "e7009",
+          "label": "7009, 7011 or 7022: timeout or hang",
+          "effects": [
+            {
+              "hypothesis": "start_timeout",
+              "effect": "supports",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "e7031",
+          "label": "7023, 7024, 7031 or 7034: terminated with an error or unexpectedly",
+          "effects": [
+            {
+              "hypothesis": "crash_on_start",
+              "effect": "supports",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "e7040",
+          "label": "7040: the start type was changed",
+          "effects": [
+            {
+              "hypothesis": "service_disabled",
+              "effect": "supports",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "e7000",
+          "label": "Only 7000: failed to start (read the error that follows it)",
+          "effects": []
+        },
+        {
+          "id": "none",
+          "label": "No Service Control Manager event at that moment",
+          "effects": [
+            {
+              "hypothesis": "wrong_role",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "not_downloaded",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "account_unusable",
+              "effect": "weakens",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "logon_right",
+              "effect": "weakens",
+              "strength": "weak"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "error_7038_text",
+      "question": "What does the text after event 7038 say?",
+      "howTo": "Open the 7038 event and read the error at the end of the message.",
+      "cost": "low",
+      "risk": "Read Only",
+      "logs": [
+        "scm-events"
+      ],
+      "sources": [
+        "Microsoft Learn: Error 1069 service cannot start (learn.microsoft.com/en-us/troubleshoot/sql/admin/error-1069-service-cannot-start)"
+      ],
+      "options": [
+        {
+          "id": "locked",
+          "label": "The referenced account is currently locked out",
+          "effects": [
+            {
+              "hypothesis": "account_unusable",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "logon_right",
+              "effect": "weakens",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "domain_unreachable",
+              "effect": "weakens",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "disabled",
+          "label": "This account is currently disabled",
+          "effects": [
+            {
+              "hypothesis": "account_unusable",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "logon_right",
+              "effect": "weakens",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "domain_unreachable",
+              "effect": "weakens",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "pwchange",
+          "label": "The password must be changed before signing in",
+          "effects": [
+            {
+              "hypothesis": "account_unusable",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "logon_right",
+              "effect": "weakens",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "domain_unreachable",
+              "effect": "weakens",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "badpw",
+          "label": "The user name or password is incorrect",
+          "effects": [
+            {
+              "hypothesis": "account_unusable",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "logon_right",
+              "effect": "weakens",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "domain_unreachable",
+              "effect": "weakens",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "domain",
+          "label": "The specified domain does not exist or could not be contacted",
+          "effects": [
+            {
+              "hypothesis": "domain_unreachable",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "account_unusable",
+              "effect": "weakens",
+              "strength": "strong"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "security_4625",
+      "question": "What do the failed logon events (4625) at that time show in the Security log?",
+      "howTo": "Event Viewer > Windows Logs > Security. Filter on event ID 4625 around the timestamp. Read the account name, Failure Reason, Status and Sub Status.",
+      "cost": "medium",
+      "risk": "Read Only",
+      "logs": [
+        "security-account-events"
+      ],
+      "sources": [
+        "Microsoft Learn: Event 4625, an account failed to log on (learn.microsoft.com/windows/security/threat-protection/auditing/event-4625)"
+      ],
+      "options": [
+        {
+          "id": "locked",
+          "label": "0xC0000234: account locked out",
+          "effects": [
+            {
+              "hypothesis": "account_unusable",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "logon_right",
+              "effect": "weakens",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "badpw",
+          "label": "0xC000006A: wrong password",
+          "effects": [
+            {
+              "hypothesis": "account_unusable",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "logon_right",
+              "effect": "weakens",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "disabled",
+          "label": "0xC0000072: account disabled",
+          "effects": [
+            {
+              "hypothesis": "account_unusable",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "logon_right",
+              "effect": "weakens",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "expired",
+          "label": "0xC0000193: account expired",
+          "effects": [
+            {
+              "hypothesis": "account_unusable",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "logon_right",
+              "effect": "weakens",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "notgranted",
+          "label": "0xC000015B: logon right not granted",
+          "effects": [
+            {
+              "hypothesis": "logon_right",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "account_unusable",
+              "effect": "weakens",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "none",
+          "label": "No 4625 events for this account",
+          "effects": [
+            {
+              "hypothesis": "account_unusable",
+              "effect": "weakens",
+              "strength": "weak"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "runas_test",
+      "question": "Does logging on with the service account work (runas /user:<machine>\\<account> cmd)?",
+      "howTo": "From a command prompt, run runas with the service account and its password. Caution: a failed attempt can count towards an account lockout. Only try it when you know the password.",
+      "cost": "medium",
+      "risk": "Controlled Impact",
+      "logs": [
+        "security-account-events"
+      ],
+      "sources": [
+        "Microsoft Learn: Error 1069 service cannot start (learn.microsoft.com/en-us/troubleshoot/sql/admin/error-1069-service-cannot-start)"
+      ],
+      "options": [
+        {
+          "id": "fails",
+          "label": "It fails",
+          "effects": [
+            {
+              "hypothesis": "account_unusable",
+              "effect": "supports",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "works",
+          "label": "It works",
+          "effects": [
+            {
+              "hypothesis": "account_unusable",
+              "effect": "weakens",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "logon_right",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "domain_unreachable",
+              "effect": "supports",
+              "strength": "weak"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "user_right",
+      "question": "Does the service account hold 'Log on as a service' and is it absent from 'Deny log on as a service'?",
+      "howTo": "secpol.msc > Local Policies > User Rights Assignment. A domain policy can override the local setting, compare with gpresult.",
+      "cost": "low",
+      "risk": "Read Only",
+      "logs": [
+        "local-security-policy",
+        "group-policy-results"
+      ],
+      "sources": [
+        "Microsoft Learn: Error 1069 service cannot start (learn.microsoft.com/en-us/troubleshoot/sql/admin/error-1069-service-cannot-start)"
+      ],
+      "options": [
+        {
+          "id": "missing",
+          "label": "The right is missing, or the account is denied",
+          "effects": [
+            {
+              "hypothesis": "logon_right",
+              "effect": "supports",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "granted",
+          "label": "The right is granted and not denied",
+          "effects": [
+            {
+              "hypothesis": "logon_right",
+              "effect": "weakens",
+              "strength": "strong"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dependencies",
+      "question": "Are all services listed under Dependencies present and running?",
+      "howTo": "Services > Properties of the failing service > Dependencies tab.",
+      "cost": "low",
+      "risk": "Read Only",
+      "logs": [
+        "services-console"
+      ],
+      "sources": [
+        "Geoff Chappell: Service Control Manager events (geoffchappell.com/studies/windows/win32/services/scm/events/eventlog.htm)"
+      ],
+      "options": [
+        {
+          "id": "broken",
+          "label": "A dependency is stopped, disabled or missing",
+          "effects": [
+            {
+              "hypothesis": "dependency_failed",
+              "effect": "supports",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "fine",
+          "label": "All dependencies are present and running",
+          "effects": [
+            {
+              "hypothesis": "dependency_failed",
+              "effect": "weakens",
+              "strength": "strong"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "manual_start",
+      "question": "What happens when you start the service by hand?",
+      "howTo": "Services > right-click > Start, or net start <service> from an elevated prompt. Note the complete error.",
+      "cost": "low",
+      "risk": "Read Only",
+      "logs": [
+        "scm-events"
+      ],
+      "sources": [
+        "Microsoft Learn: Error 1069 service cannot start (learn.microsoft.com/en-us/troubleshoot/sql/admin/error-1069-service-cannot-start)",
+        "Support case supplied by user (DeltaV Live down after workstation configuration, 2026-11-15)"
+      ],
+      "options": [
+        {
+          "id": "logon",
+          "label": "Error 1069: the service did not start due to a logon failure",
+          "effects": [
+            {
+              "hypothesis": "account_unusable",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "logon_right",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "domain_unreachable",
+              "effect": "supports",
+              "strength": "weak"
+            }
+          ]
+        },
+        {
+          "id": "stops",
+          "label": "It starts, then stops again",
+          "effects": [
+            {
+              "hypothesis": "crash_on_start",
+              "effect": "supports",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "works",
+          "label": "It starts and stays running",
+          "effects": [
+            {
+              "hypothesis": "account_unusable",
+              "effect": "weakens",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "logon_right",
+              "effect": "weakens",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "domain_unreachable",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "start_timeout",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "dependency_failed",
+              "effect": "supports",
+              "strength": "weak"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "role_check",
+      "question": "Does the role of this station match its purpose (operator station, not terminal server or remote client)?",
+      "howTo": "Compare with the project design and with a working operator station: the node type of this station in DeltaV Explorer, the services present, and the role shown by Workstation Configuration. Do not apply anything to find out.",
+      "cost": "medium",
+      "risk": "Read Only",
+      "logs": [
+        "install-logs",
+        "regall-log"
+      ],
+      "sources": [
+        "Support case supplied by user (DeltaV Live down after workstation configuration, 2026-11-15)"
+      ],
+      "verified": false,
+      "options": [
+        {
+          "id": "differs",
+          "label": "No, the role differs from what it should be",
+          "effects": [
+            {
+              "hypothesis": "wrong_role",
+              "effect": "supports",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "matches",
+          "label": "Yes, the role is the intended one",
+          "effects": [
+            {
+              "hypothesis": "wrong_role",
+              "effect": "excludes",
+              "because": "The hypothesis is that the role is wrong, and it is correct."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "customer_changes",
+      "question": "What did the customer change before it stopped working?",
+      "howTo": "Ask first. The customer often does not mention it, so verify in the logs: Application log (MsiInstaller), Hotfixes.log, install logs, Security log and group policy results.",
+      "cost": "low",
+      "risk": "Read Only",
+      "logs": [
+        "msi-installer-events",
+        "install-logs",
+        "regall-log",
+        "hotfixes-log",
+        "security-account-events",
+        "group-policy-results"
+      ],
+      "sources": [
+        "Support case supplied by user (DeltaV Live down after workstation configuration, 2026-11-15)"
+      ],
+      "verified": false,
+      "options": [
+        {
+          "id": "reconfig",
+          "label": "Workstation Configuration was run again, or a new station was put in service",
+          "effects": [
+            {
+              "hypothesis": "wrong_role",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "not_downloaded",
+              "effect": "supports",
+              "strength": "weak"
+            }
+          ]
+        },
+        {
+          "id": "accounts",
+          "label": "An account, a password or a group policy was changed",
+          "effects": [
+            {
+              "hypothesis": "account_unusable",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "logon_right",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "domain_unreachable",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "service_disabled",
+              "effect": "supports",
+              "strength": "weak"
+            }
+          ]
+        },
+        {
+          "id": "vm",
+          "label": "A VM snapshot or checkpoint was reverted or restored",
+          "effects": [
+            {
+              "hypothesis": "database_unavailable",
+              "effect": "supports",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "dbswitch",
+          "label": "The active DeltaV Live database was switched or restored",
+          "effects": [
+            {
+              "hypothesis": "database_unavailable",
+              "effect": "supports",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "software",
+          "label": "Software was installed, upgraded or patched",
+          "effects": [
+            {
+              "hypothesis": "dependency_failed",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "crash_on_start",
+              "effect": "supports",
+              "strength": "weak"
+            }
+          ]
+        },
+        {
+          "id": "unknown",
+          "label": "Nothing known",
+          "effects": []
+        }
+      ]
+    },
+    {
+      "id": "live_message",
+      "question": "Which message do DeltaV Live or DeltaV Live Administration show?",
+      "howTo": "Read the dialog text exactly. Community reports only, not an official KBA.",
+      "cost": "low",
+      "risk": "Read Only",
+      "sources": [
+        "Emerson Exchange 365 community thread 9017: Cannot connect to database, DeltaV Live not opening",
+        "Emerson Exchange 365 community thread 9931: DeltaV Live Graphics Studio and Administration errors on startup"
+      ],
+      "verified": false,
+      "options": [
+        {
+          "id": "noconfig",
+          "label": "Workstation Configuration necessary for this application to run cannot be found",
+          "effects": [
+            {
+              "hypothesis": "not_downloaded",
+              "effect": "supports",
+              "strength": "strong"
+            },
+            {
+              "hypothesis": "wrong_role",
+              "effect": "supports",
+              "strength": "weak"
+            }
+          ]
+        },
+        {
+          "id": "oe",
+          "label": "Unable to initialize DeltaV Live. Verify that the Oe Application Server is running without errors",
+          "effects": [
+            {
+              "hypothesis": "crash_on_start",
+              "effect": "supports",
+              "strength": "weak"
+            },
+            {
+              "hypothesis": "database_unavailable",
+              "effect": "supports",
+              "strength": "weak"
+            }
+          ]
+        },
+        {
+          "id": "nodb",
+          "label": "Unable to get active database, Rts error ItemNotFound",
+          "effects": [
+            {
+              "hypothesis": "database_unavailable",
+              "effect": "supports",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "other",
+          "label": "Something else",
+          "effects": []
+        }
+      ]
+    }
+  ]
+}

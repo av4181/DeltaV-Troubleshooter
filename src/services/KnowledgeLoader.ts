@@ -1,6 +1,7 @@
 import operateData from "../knowledge/operate.json";
 
 import { formatIssue, validateKnowledge } from "../knowledge/validate.ts";
+import { hypothesisSetIds } from "./HypothesisLoader.ts";
 import { knownLogIds } from "./LogCatalog.ts";
 import type { KnowledgeBase } from "../types/KnowledgeBase.ts";
 
@@ -9,7 +10,7 @@ import type { KnowledgeBase } from "../types/KnowledgeBase.ts";
  * Throws with a readable list of problems instead of failing later on a click.
  */
 export function loadKnowledge(): KnowledgeBase {
-  const result = validateKnowledge(operateData, { logIds: knownLogIds() });
+  const result = validateKnowledge(operateData, { logIds: knownLogIds(), hypothesisSetIds: hypothesisSetIds() });
 
   for (const issue of result.issues) {
     if (issue.severity === "warning") console.warn(formatIssue(issue));

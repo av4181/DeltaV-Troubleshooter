@@ -82,6 +82,8 @@ const baseFields = {
   verified: z.boolean().optional(),
   /** Ids of log catalog entries to read or collect at this point. */
   logs: z.array(z.string().min(1)).optional(),
+  /** Id of a hypothesis set (meta.id) that continues the analysis in hypothesis mode. */
+  hypothesisSet: z.string().min(1).optional(),
 };
 
 /** A decision point: the user picks one answer. */

@@ -184,7 +184,7 @@ function HypothesisRow({
           </>
         )}
 
-        <LogList ids={hypothesis.logs} />
+        <LogList ids={hypothesis.logs} defaultOpen={false} />
 
         <p style={{ fontSize: "0.85rem", color: "#666" }}>Sources: {hypothesis.sources.join(", ")}</p>
 
@@ -220,7 +220,7 @@ function ObservationRow({
         <span style={chip}>Risk: {observation.risk}</span>
       </div>
       {observation.howTo && <div style={{ color: "#666", fontSize: "0.9rem" }}>{observation.howTo}</div>}
-      <LogList ids={observation.logs} />
+      <LogList ids={observation.logs} defaultOpen={false} />
       <div style={{ marginTop: "0.4rem" }}>
         {observation.options.map((option) => (
           <button

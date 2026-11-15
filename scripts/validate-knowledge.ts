@@ -23,6 +23,18 @@ for (const file of readdirSync(LOGS_DIR).filter((name) => name.endsWith(".json")
   if (result.data) console.log(`logs/${file}: ${result.data.logs.length} entries OK`);
 }
 
+// Hypothesis set ids first: tree nodes may link to them.
+const hypothesisSetIds = new Set<string>();
+const HYP_DIR = join(KNOWLEDGE_DIR, "hypotheses");
+for (const file of readdirSync(HYP_DIR).filter((name) => name.endsWith(".json"))) {
+  try {
+    const meta = (JSON.parse(readFileSync(join(HYP_DIR, file), "utf-8")) as { meta?: { id?: unknown } }).meta;
+    if (typeof meta?.id === "string") hypothesisSetIds.add(meta.id);
+  } catch {
+    // reported when the file is validated below
+  }
+}
+
 const files = readdirSync(KNOWLEDGE_DIR).filter((name) => name.endsWith(".json"));
 
 if (files.length === 0) {
@@ -43,7 +55,7 @@ for (const file of files) {
     continue;
   }
 
-  const result = validateKnowledge(raw, { logIds });
+  const result = validateKnowledge(raw, { logIds, hypothesisSetIds });
   const nodeCount = raw && typeof raw === "object" ? Object.keys(raw).length : 0;
 
   for (const issue of result.issues) {

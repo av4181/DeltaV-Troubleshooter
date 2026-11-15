@@ -42,7 +42,7 @@ export function nextIds(node: Node): string[] {
  */
 export function validateKnowledge(
   raw: unknown,
-  options: { logIds?: ReadonlySet<string> } = {},
+  options: { logIds?: ReadonlySet<string>; hypothesisSetIds?: ReadonlySet<string> } = {},
 ): ValidationResult {
   const issues: ValidationIssue[] = [];
 
@@ -78,6 +78,18 @@ export function validateKnowledge(
     }
 
     issues.push(...unknownLogRefs(key, node.logs, options.logIds));
+
+    if (
+      node.hypothesisSet &&
+      options.hypothesisSetIds &&
+      !options.hypothesisSetIds.has(node.hypothesisSet)
+    ) {
+      issues.push({
+        severity: "error",
+        nodeId: key,
+        message: `Refers to unknown hypothesis set "${node.hypothesisSet}".`,
+      });
+    }
 
     for (const target of nextIds(node)) {
       if (!(target in knowledge)) {
