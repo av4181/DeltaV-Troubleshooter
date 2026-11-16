@@ -1,0 +1,117 @@
+{
+  "opc_start": {
+    "id": "opc_start",
+    "type": "question",
+    "title": "OPC / DCOM Troubleshooting",
+    "description": "Selecteer het faal-domein. OPC Classic is sterk afhankelijk van Windows Security (DCOM/NTLM). OPC UA is puur TCP-socket en certificaat-gebaseerd.",
+    "layer": "transport-session",
+    "answers": [
+      {
+        "label": "OPC Classic (DA/HDA/AE) & DCOM",
+        "sub": "Access Denied, 0x80070005, RPC Server Unavailable",
+        "next": "c_dcom_check"
+      },
+      {
+        "label": "OPC UA (TCP 4840 of 9409)",
+        "sub": "BadSecurityChecksFailed, TCP timeouts",
+        "next": "u_ua_check"
+      },
+      {
+        "label": "OPC Mirror (Pipes/Service)",
+        "sub": "Service start niet, SyncWrite timeouts",
+        "next": "m_mirror_check"
+      }
+    ]
+  },
+  "c_dcom_check": {
+    "id": "c_dcom_check",
+    "type": "checklist",
+    "title": "1. DCOM Hardening & NTLM Checklist",
+    "description": "Windows updates (vanaf mrt 2023 / KB5004442) dwingen DCOM 'Packet Integrity' af. NTLMv2 mismatches zijn de tweede grootste blokkade.",
+    "layer": "transport-session",
+    "items": [
+      "Event Viewer: Check 'System' logs op DistributedCOM Event ID 10036 (Server) of 10037/10038 (Client).",
+      "DCOM Config: Start dcomcnfg -> Component Services -> My Computer -> DCOM Config -> [Jouw OPC Client/Server]. Zet 'Authentication Level' op 'Packet Integrity'.",
+      "Event Viewer: Check 'Security' logs op NTLM Audit Failures (Event ID 4776 of 4625).",
+      "NTLM Niveau: Open secpol.msc -> Local Policies -> Security Options -> 'LAN Manager Authentication Level'. Dit moet 'Send NTLMv2 response only. Refuse LM & NTLM' (Level 5) zijn voor v14+.",
+      "DNS Resolutie: DCOM vereist strikte forward én reverse lookup. Test met ping <hostname> en valideer evt. hardcoded entries in C:\\Windows\\System32\\drivers\\etc\\hosts."
+    ],
+    "next": "c_accessdenied",
+    "nextLabel": "Verder naar ACL / Access Denied"
+  },
+  "c_accessdenied": {
+    "id": "c_accessdenied",
+    "type": "checklist",
+    "title": "2. 0x80070005 Access Denied (ACLs)",
+    "description": "Als authenticatie slaagt maar de DCOM aanroep wordt geweigerd, zit de fout in Windows-rechten of DCOM Launch/Access permissions.",
+    "layer": "application",
+    "items": [
+      "Identieke Accounts: De 'Common OPC User' heeft op client én server EXACT dezelfde username en wachtwoord.",
+      "Wachtwoord Vlaggen: Controleer in compmgmt.msc of 'User must change password at next logon' UIT staat, en het wachtwoord niet verlopen is.",
+      "Windows Lokale Groepen: De user is lid van 'DeltaV' of de specifieke OPC/Database groepen op de doelmachine.",
+      "DCOM Permissies (dcomcnfg): De OPC user staat expliciet in de 'Launch and Activation Permissions' én 'Access Permissions' van het DeltaV OPC object (bv. FrsOpcDv)."
+    ],
+    "next": "c_opc_done",
+    "nextLabel": "Afronden"
+  },
+  "c_opc_done": {
+    "id": "c_opc_done",
+    "type": "terminal",
+    "title": "DCOM/OPC Validatie Voltooid",
+    "description": "Blijft de connectie falen na het afdwingen van Packet Integrity, NTLMv2 en de correcte ACL's? Isoleer dan de client-applicatie door te testen met een onafhankelijke tool.",
+    "layer": "application",
+    "actions": [
+      "Test met OPCwatchit (Device Read uitgevinkt)"
+    ]
+  },
+  "u_ua_check": {
+    "id": "u_ua_check",
+    "type": "checklist",
+    "title": "OPC UA Checklist (TCP/Certificaten)",
+    "description": "OPC UA negeert DCOM volledig. Fouten zitten uitsluitend in netwerkroutering of certificaat-trusts.",
+    "layer": "network",
+    "items": [
+      "Poort Luistert: Check met 'netstat -ano | findstr 9409' (of 4840) of de server luistert. Test verbinding vanaf de client via PowerShell: 'Test-NetConnection <IP> -Port 9409'.",
+      "TCP Handshake (Wireshark): Filter op 'opcua'. Controleer of de TCP-handshake (Hello/Acknowledge) voltooit. Zo niet -> Firewall probleem.",
+      "Certificaat Trust: Foutcode 'BadSecurityChecksFailed' tijdens OpenSecureChannel? Het clientcertificaat moet handmatig worden toegevoegd aan de 'Trusted Issuers' lijst van de UA Server.",
+      "Endpoint Mismatch: Verifieer of de URL en SecurityPolicy in de CreateSession-aanvraag 100% overeenkomen met wat de server aanbiedt tijdens de FindServers fase."
+    ],
+    "next": "u_ua_done",
+    "nextLabel": "Afronden"
+  },
+  "u_ua_done": {
+    "id": "u_ua_done",
+    "type": "terminal",
+    "title": "OPC UA Validatie Voltooid",
+    "description": "TCP-connectiviteit en certificaten zijn geverifieerd. Blijven er fouten, verifieer dan het IdentityToken (User/Password vs. Anonymous).",
+    "layer": "application",
+    "actions": [
+      "Verifieer IdentityToken in de client configuratie"
+    ]
+  },
+  "m_mirror_check": {
+    "id": "m_mirror_check",
+    "type": "checklist",
+    "title": "OPC Mirror Checklist",
+    "description": "Fouten bij het spiegelen van data tussen servers via de OPC Mirror service.",
+    "layer": "application",
+    "items": [
+      "Service start niet: Het service-account mag GEEN Windows Administrator zijn, maar moet lid zijn van 'DeltaV OPC Mirror Users'.",
+      "Fout 1053 bij starten: Check of de GPO 'Default Domain Policy' toegang tot de desktop blokkeert (Zie KBA NK-2100-0028).",
+      "Pipes herstellen niet: Bij 30+ minuten onbereikbaarheid van een server vallen pipes blijvend stil. Herstart de OPC Mirror Service handmatig (AK-1800-0028).",
+      "Continue switchovers (Redundant): Dit komt door 'SyncWrite timeouts'. Verander Redundancy Monitoring van 'Failure of ANY server' naar 'Failure of ALL servers'."
+    ],
+    "next": "m_mirror_done",
+    "nextLabel": "Afronden"
+  },
+  "m_mirror_done": {
+    "id": "m_mirror_done",
+    "type": "terminal",
+    "title": "OPC Mirror Validatie Voltooid",
+    "description": "OPC Mirror instellingen zijn nagekeken.",
+    "layer": "application",
+    "actions": [
+      "Zie NK-1500-0105 voor de meest recente OPC Mirror hotfixes (bv. TFS131228)"
+    ]
+  }
+}
