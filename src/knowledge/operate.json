@@ -1426,12 +1426,6 @@
       {
         "label": "I only need to know which logs or tools to use",
         "next": "logs.area"
-      },
-      {
-        "label": "OPC-communicatieprobleem",
-        "sub": "DA / HDA / AE / UA / Mirror",
-        "variant": "neutral",
-        "next": "opc_start"
       }
     ]
   },
@@ -1473,7 +1467,7 @@
     "answers": [
       {
         "label": "Some are stopped and starting them fails, or the start type is Disabled",
-        "next": "app.service.failure.collect",
+        "next": "app.services.why",
         "sub": "go to: why do they not start?"
       },
       {
@@ -1507,7 +1501,7 @@
     "answers": [
       {
         "label": "Some are stopped and starting them fails, or the start type is Disabled",
-        "next": "app.service.failure.collect",
+        "next": "app.services.why",
         "sub": "go to: why do they not start?"
       },
       {
@@ -1659,6 +1653,10 @@
     ],
     "answers": [
       {
+        "label": "I first want to understand how a DeltaV station is installed and configured",
+        "next": "install.chain"
+      },
+      {
         "label": "Workstation Configuration was run again, or a new station was put in service",
         "next": "change.workstation_config"
       },
@@ -1684,7 +1682,7 @@
     "id": "change.workstation_config",
     "type": "terminal",
     "title": "A workstation configuration was (re)run",
-    "description": "Running Workstation Configuration again can change the role of the station and with it the services that belong to it. In a support case a terminal server role was chosen instead of operator station, after which DeltaV Live no longer worked. The customer often does not mention this. This comes from a support case and is not confirmed in an official KBA.",
+    "description": "Workstation Configuration is meant to be re-run in some cases (node name or type change, Remote Access Server, new active database) and, per KBA NK-1300-0116, also as a troubleshooting step. Re-running it can change the type of the node and so the services that belong to it. The wizard offers ProfessionalPLUS; Professional, Operator, Application, Base or Inter-Zone Server; and Simulate standalone. 'Terminal server' is not a wizard type: it is a Windows Remote Desktop Services role, or the Remote Access Server option in the wizard, so ask exactly what the customer selected. In a support case a terminal server role was chosen instead of operator station, after which DeltaV Live no longer worked. That a re-run can change the type is confirmed by the KBA; that this specific wrong choice stops DeltaV Live is only seen in the support case.",
     "layer": "application",
     "riskLevel": "Read Only",
     "verified": false,
@@ -1697,12 +1695,18 @@
       "services-console"
     ],
     "sources": [
-      "Support case supplied by user (DeltaV Live down after workstation configuration, 2026-11-15)"
+      "Support case supplied by user (DeltaV Live down after workstation configuration, 2026-11-15)",
+      "DeltaV 7027 v15.LTS course material, Workstation Configuration (pages 84-102)",
+      "KBA NK-1300-0116 (referenced in course material, not read)",
+      "KBA NK-1300-0116 General Information on Workstation Configuration and Regall Utilities (14 Jul 2021)",
+      "KBA NK-1300-0116: General Information on Workstation Configuration and Regall Utilities (14 Jul 2021)"
     ],
     "actions": [
-      "Ask which role was chosen",
-      "Compare the node type and the services with a working operator station",
-      "Check install logs, Regall.log and the Application log (MsiInstaller) around that time",
+      "Ask which workstation type and options (Remote Access Server, network type, active database) were selected",
+      "Compare the node type in DeltaV Explorer and the services with a working operator station",
+      "Read C:\\DeltaV\\regall.log and C:\\DeltaV\\InstallLogs around that time",
+      "Check whether the Windows HOSTS file was deleted (it is on non-Application Stations, KBA AP-0900-0181)",
+      "Check the Application log (MsiInstaller) and Hotfixes.log around that time",
       "Enter what you found in hypothesis mode"
     ]
   },
@@ -1799,5 +1803,30 @@
       "DeltaV Log Files Reference Guide",
       "Geoff Chappell: Service Control Manager events (geoffchappell.com/studies/windows/win32/services/scm/events/eventlog.htm)"
     ]
+  },
+  "install.chain": {
+    "id": "install.chain",
+    "type": "info",
+    "title": "How a DeltaV station gets installed: the chain, and where it can go wrong",
+    "description": "A station is built in fixed steps and each step leaves traces. (1) Windows with the Emerson image: computer name, administrator account, time zone, licence, network cards, binding order, IP addresses; the choice between workgroup, traditional domain or IDDC (v14.3 and higher); the RDS role first if the station is a ProfessionalPLUS or operator station with remote clients. (2) Microsoft Office only if needed (Excel for DeltaV Reporter). (3) DeltaV software install from the System Passport, then Windows updates and hotfixes. (4) DeltaV Workstation Configuration: pick the workstation type, system name and node name, the DeltaV Primary and Secondary network cards, the network type (workgroup, domain with ProfessionalPLUS as domain controller, or domain with an independent DeltaV domain controller). It then runs automatically: removing DeltaV services, copying files, configuring the control network, joining the network, creating user accounts, creating and configuring the database, setting file security, starting DeltaV services. (5) Regall registers the DeltaV services and components (log C:\\DeltaV\\regall.log). (6) The DeltaV Services account password is set and must be identical on all DeltaV machines. (7) Reboot, log on, and on a non-ProfessionalPLUS station the node still has to be downloaded from DeltaV Explorer. Two points matter for troubleshooting: the course material says the node name may only be changed in Workstation Configuration, and NK-1300-0116 confirms that Workstation Configuration can be re-run on an established node (to change node name or workstation type, set up a Remote Access Server, switch simplex/redundant, restore DeltaVAdmin, and so on), so a re-run is a normal action that rewrites the node's configuration. Regall is a separate utility that only registers services and DCOM components. Which wizard step produces which exact service difference between roles is not described in these sources.",
+    "layer": "application",
+    "mechanism": "windows-os",
+    "riskLevel": "Read Only",
+    "verified": true,
+    "logs": [
+      "install-logs",
+      "regall-log",
+      "msi-installer-events",
+      "hotfixes-log",
+      "services-console"
+    ],
+    "sources": [
+      "DeltaV 7027 v15.LTS course material, Workstation Configuration (pages 84-102)",
+      "DeltaV Installation Flowchart Rev 2 (pptx, supplied by user)",
+      "DeltaV Install and Uninstall (pptx, supplied by user)",
+      "KBA NK-1300-0116 General Information on Workstation Configuration and Regall Utilities (14 Jul 2021)",
+      "KBA NK-1300-0116: General Information on Workstation Configuration and Regall Utilities (14 Jul 2021)"
+    ],
+    "next": "change.workstation_config"
   }
 }

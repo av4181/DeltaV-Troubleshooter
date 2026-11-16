@@ -8,7 +8,7 @@
     {
       "id": "account_unusable",
       "title": "The service account is locked out, disabled, expired or has a wrong password",
-      "description": "The service cannot log on. Event 7038 names the reason in its error text, and Windows reports error 1069 when you start it by hand. The DeltaV Services account password is set during Workstation Configuration and must be identical on all DeltaV machines, so a changed or mismatched password on one node is a candidate (source: course material).",
+      "description": "The service cannot log on. Event 7038 names the reason in its error text, and Windows reports error 1069 when you start it by hand. The DeltaV Services account password is set during Workstation Configuration and must be identical on all DeltaV machines, so a changed or mismatched password on one node is a candidate (source: course material). NK-1300-0116: an invalid DeltaVAdmin password during Workstation Configuration or regall causes database connection and setup-data propagation failures.",
       "domain": "WindowsOS",
       "layer": "application",
       "mechanism": "windows-os",
@@ -28,7 +28,8 @@
         "Microsoft Learn: Error 1069 service cannot start (learn.microsoft.com/en-us/troubleshoot/sql/admin/error-1069-service-cannot-start)",
         "Microsoft Learn: Event 4625, an account failed to log on (learn.microsoft.com/windows/security/threat-protection/auditing/event-4625)",
         "Petri: Account lockout event ID 4740 (petri.com/?p=774221)",
-        "DeltaV 7027 v15.LTS course material, Workstation Configuration (pages 84-102)"
+        "DeltaV 7027 v15.LTS course material, Workstation Configuration (pages 84-102)",
+        "KBA NK-1300-0116 General Information on Workstation Configuration and Regall Utilities (14 Jul 2021)"
       ]
     },
     {
@@ -95,7 +96,7 @@
     {
       "id": "wrong_role",
       "title": "The station was configured with the wrong workstation type or options (for example a terminal server / remote access setup instead of a plain operator station)",
-      "description": "The type chosen in Workstation Configuration (ProfessionalPLUS, Professional, Operator, Application, Base, Inter-Zone Server, Simulate) or the remote access options does not match the purpose of the station. The course material states the type is permanent once installation starts and that the wizard removes and restarts the DeltaV services and rebuilds the database configuration. The existence of these wizard choices is verified; that a wrong choice stops DeltaV Live is only seen in a support case and not confirmed in a KBA.",
+      "description": "The type chosen in Workstation Configuration (ProfessionalPLUS, Professional, Operator, Application, Base, Inter-Zone Server, Simulate) or the remote access options does not match the purpose of the station. KBA NK-1300-0116 confirms that re-running the utility can change the node type and the node's network, access control, user accounts and system settings. That a wrong choice stops DeltaV Live is only seen in a support case and not confirmed in a KBA.",
       "domain": "Live",
       "layer": "application",
       "prior": "possible",
@@ -103,7 +104,7 @@
       "actions": [
         "Compare the node type in DeltaV Explorer and the list of DeltaV services with a working operator station",
         "Find out exactly which type and options were selected (ask; check regall.log and InstallLogs)",
-        "If wrong, the usual fix is to re-run Workstation Configuration with the right type; since the type is described as permanent, confirm the procedure for your version with Emerson first"
+        "If wrong, the supported route is to re-run Workstation Configuration with the right type, with a valid DeltaVAdmin password, then regall /register and a reboot. Confirm with the Global Service Center first, because the KBA says it must not replace proper troubleshooting"
       ],
       "logs": [
         "install-logs",
@@ -114,7 +115,9 @@
       ],
       "sources": [
         "Support case supplied by user (DeltaV Live down after workstation configuration, 2026-11-15)",
-        "DeltaV 7027 v15.LTS course material, Workstation Configuration (pages 84-102)"
+        "DeltaV 7027 v15.LTS course material, Workstation Configuration (pages 84-102)",
+        "KBA NK-1300-0116 General Information on Workstation Configuration and Regall Utilities (14 Jul 2021)",
+        "KBA NK-1300-0116: General Information on Workstation Configuration and Regall Utilities (14 Jul 2021)"
       ]
     },
     {
@@ -135,7 +138,8 @@
       ],
       "sources": [
         "Emerson Exchange 365 community thread 9017: Cannot connect to database, DeltaV Live not opening",
-        "DeltaV 7027 v15.LTS course material, Workstation Configuration (pages 84-102): after configuration a non-ProfessionalPLUS station must still be downloaded with DeltaV Explorer"
+        "DeltaV 7027 v15.LTS course material, Workstation Configuration (pages 84-102): after configuration a non-ProfessionalPLUS station must still be downloaded with DeltaV Explorer",
+        "KBA NK-1300-0116 General Information on Workstation Configuration and Regall Utilities (14 Jul 2021)"
       ]
     },
     {
@@ -218,6 +222,30 @@
       ],
       "sources": [
         "Geoff Chappell: Service Control Manager events (geoffchappell.com/studies/windows/win32/services/scm/events/eventlog.htm)"
+      ]
+    },
+    {
+      "id": "unregistered_components",
+      "title": "DeltaV services or DCOM components are no longer registered",
+      "description": "Typical after untested third-party software was installed or removed, or system files were copied from another machine. Clients see 'Class not registered' or 'Server Unavailable'; DeltaV services or applications do not start. Regall /register is the preferred remedy per the KBA.",
+      "domain": "Runtime",
+      "layer": "application",
+      "mechanism": "windows-os",
+      "prior": "possible",
+      "verified": true,
+      "actions": [
+        "Look for 'Class not registered' or 'Server Unavailable' in the application message and the Application log",
+        "Read C:\\DeltaV\\regall.log for errors",
+        "Remedy per KBA: log on as Administrator to Windows and DeltaV, stop DeltaV services in services.msc, run 'regall /register' in a command prompt, reboot. Ask the Global Service Center if the process allows it"
+      ],
+      "logs": [
+        "regall-log",
+        "msi-installer-events",
+        "install-logs",
+        "services-console"
+      ],
+      "sources": [
+        "KBA NK-1300-0116: General Information on Workstation Configuration and Regall Utilities (14 Jul 2021)"
       ]
     }
   ],
@@ -953,7 +981,8 @@
       ],
       "sources": [
         "Support case supplied by user (DeltaV Live down after workstation configuration, 2026-11-15)",
-        "DeltaV 7027 v15.LTS course material, Workstation Configuration (pages 84-102)"
+        "DeltaV 7027 v15.LTS course material, Workstation Configuration (pages 84-102)",
+        "KBA NK-1300-0116 General Information on Workstation Configuration and Regall Utilities (14 Jul 2021)"
       ],
       "verified": false,
       "options": [
@@ -1145,6 +1174,49 @@
         {
           "id": "other",
           "label": "Something else",
+          "effects": []
+        }
+      ]
+    },
+    {
+      "id": "class_not_registered",
+      "question": "Does the application or the log show 'Class not registered' or 'Server Unavailable'?",
+      "howTo": "Read the message on screen and search the Application log and regall.log for the text and a timestamp.",
+      "cost": "low",
+      "risk": "Read Only",
+      "logs": [
+        "regall-log",
+        "msi-installer-events"
+      ],
+      "sources": [
+        "KBA NK-1300-0116: General Information on Workstation Configuration and Regall Utilities (14 Jul 2021)"
+      ],
+      "options": [
+        {
+          "id": "yes",
+          "label": "Yes",
+          "effects": [
+            {
+              "hypothesis": "unregistered_components",
+              "effect": "supports",
+              "strength": "strong"
+            }
+          ]
+        },
+        {
+          "id": "no",
+          "label": "No, other errors",
+          "effects": [
+            {
+              "hypothesis": "unregistered_components",
+              "effect": "weakens",
+              "strength": "weak"
+            }
+          ]
+        },
+        {
+          "id": "unknown",
+          "label": "Not checked",
           "effects": []
         }
       ]
