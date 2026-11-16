@@ -5,34 +5,35 @@ interface Props {
   node: Node;
 }
 
-const badge = {
-  display: "inline-block",
-  padding: "0.1rem 0.5rem",
-  marginRight: "0.4rem",
-  borderRadius: "999px",
-  border: "1px solid #aaa",
-  fontSize: "0.8rem",
-} as const;
-
-/** Domain / layer / mechanism / risk badges plus sources and verification state. */
+/** Risk and verification up front; layer, mechanism and sources one click away; logs open on final steps. */
 export default function NodeMeta({ node }: Props) {
+  const hasDetails = node.domain || node.layer || node.mechanism || (node.sources?.length ?? 0) > 0;
   return (
-    <div style={{ marginBottom: "0.75rem" }}>
-      {node.domain && <span style={badge}>{node.domain}</span>}
-      {node.layer && <span style={badge}>Layer: {node.layer}</span>}
-      {node.mechanism && <span style={badge}>Mechanism: {node.mechanism}</span>}
-      {node.riskLevel && <span style={badge}>Risk: {node.riskLevel}</span>}
-      {node.verified === false && (
-        <span style={{ ...badge, borderColor: "#b45309", color: "#b45309" }}>
-          Unverified
-        </span>
+    <>
+      <div className="chips">
+        {node.riskLevel && <span className="chip">Risk: {node.riskLevel}</span>}
+        {node.verified === false && <span className="chip warn">Unverified</span>}
+      </div>
+      {hasDetails && (
+        <details className="more">
+          <summary>Where this fits and sources</summary>
+          <div>
+            <div className="chips">
+              {node.domain && <span className="chip">{node.domain}</span>}
+              {node.layer && <span className="chip">Layer: {node.layer}</span>}
+              {node.mechanism && <span className="chip">Mechanism: {node.mechanism}</span>}
+            </div>
+            {node.sources && node.sources.length > 0 && (
+              <ul className="sources">
+                {node.sources.map((source) => (
+                  <li key={source}>{source}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </details>
       )}
-      {node.sources && node.sources.length > 0 && (
-        <p style={{ fontSize: "0.85rem", color: "#666", margin: "0.5rem 0 0" }}>
-          Sources: {node.sources.join(", ")}
-        </p>
-      )}
-      <LogList ids={node.logs} />
-    </div>
+      <LogList ids={node.logs} defaultOpen={node.type === "terminal"} />
+    </>
   );
 }

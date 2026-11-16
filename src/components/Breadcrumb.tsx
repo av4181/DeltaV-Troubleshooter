@@ -5,31 +5,29 @@ interface Props {
   onNavigate: (index: number) => void;
 }
 
-/** Clickable trail; the last crumb is the current node and is not a link. */
+const VISIBLE = 3;
+
+/** Clickable trail of the last few steps; the last crumb is the current node. */
 export default function Breadcrumb({ crumbs, onNavigate }: Props) {
+  const start = Math.max(0, crumbs.length - VISIBLE);
   return (
-    <nav aria-label="Troubleshooting trail" style={{ marginBottom: "1rem", fontSize: "0.9rem" }}>
-      {crumbs.map((crumb, index) => {
+    <nav aria-label="Troubleshooting trail" className="crumbs">
+      {start > 0 && (
+        <>
+          <button onClick={() => onNavigate(start - 1)} title="Earlier steps">…</button>
+          <span className="sep">›</span>
+        </>
+      )}
+      {crumbs.slice(start).map((crumb, offset) => {
+        const index = start + offset;
         const isLast = index === crumbs.length - 1;
         return (
           <span key={`${crumb.id}-${index}`}>
-            {index > 0 && <span style={{ color: "#999" }}> &gt; </span>}
+            {offset > 0 && <span className="sep">›</span>}
             {isLast ? (
               <span aria-current="page">{crumb.title}</span>
             ) : (
-              <button
-                onClick={() => onNavigate(index)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  padding: 0,
-                  color: "#2563eb",
-                  cursor: "pointer",
-                  font: "inherit",
-                }}
-              >
-                {crumb.title}
-              </button>
+              <button onClick={() => onNavigate(index)}>{crumb.title}</button>
             )}
           </span>
         );

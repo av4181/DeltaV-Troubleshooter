@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import type { Node } from "../models/Node";
 import NodeMeta from "./NodeMeta";
+import Prose from "./Prose";
 
 type ChecklistNode = Extract<Node, { type: "checklist" }>;
 
@@ -23,12 +24,11 @@ export default function ChecklistCard({ node, onContinue }: Props) {
   }
 
   return (
-    <div>
+    <div className="card">
       <h2>{node.title}</h2>
-      <NodeMeta node={node} />
-      {node.description && <p>{node.description}</p>}
+      {node.description && <Prose text={node.description} />}
 
-      <ul style={{ listStyle: "none", padding: 0 }}>
+      <ul className="checklist">
         {node.items.map((item) => (
           <li key={item}>
             <label>
@@ -43,9 +43,10 @@ export default function ChecklistCard({ node, onContinue }: Props) {
         ))}
       </ul>
 
-      <button onClick={() => onContinue(node.next)}>
+      <button className="primary" onClick={() => onContinue(node.next)}>
         {node.nextLabel ?? "Continue"}
       </button>
+      <NodeMeta node={node} />
     </div>
   );
 }

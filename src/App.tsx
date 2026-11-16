@@ -34,8 +34,8 @@ function App() {
 
   if (!node) {
     return (
-      <div style={{ padding: "2rem", maxWidth: "900px", margin: "auto", color: "red" }}>
-        <h2>Knowledge Base Error</h2>
+      <div className="card">
+        <h2>Knowledge base error</h2>
         <p>No node was found for: {currentId(state)}</p>
       </div>
     );
@@ -46,30 +46,23 @@ function App() {
     : undefined;
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "900px", margin: "auto" }}>
-      <h1>DeltaV Root Cause Assistant</h1>
-
-      <div style={{ marginBottom: "1rem" }}>
-        <button
-          onClick={() => setMode("guided")}
-          aria-pressed={mode === "guided"}
-          style={{ marginRight: "0.5rem", fontWeight: mode === "guided" ? "bold" : "normal" }}
-        >
-          Guided mode
-        </button>
-        <button
-          onClick={() => setMode("hypothesis")}
-          aria-pressed={mode === "hypothesis"}
-          style={{ fontWeight: mode === "hypothesis" ? "bold" : "normal" }}
-        >
-          Hypothesis mode
-        </button>
-      </div>
+    <>
+      <header className="header">
+        <h1>DeltaV Root Cause Assistant</h1>
+        <div className="tabs" role="group" aria-label="Mode">
+          <button onClick={() => setMode("guided")} aria-pressed={mode === "guided"}>
+            Guided mode
+          </button>
+          <button onClick={() => setMode("hypothesis")} aria-pressed={mode === "hypothesis"}>
+            Hypothesis mode
+          </button>
+        </div>
+      </header>
 
       {mode === "hypothesis" && activeSet && (
         <>
           {hypothesisSets.length > 1 && (
-            <label style={{ display: "block", marginBottom: "1rem" }}>
+            <label className="muted" style={{ display: "block", marginBottom: 12 }}>
               Problem:{" "}
               <select value={activeSet.meta.id} onChange={(event) => setSetId(event.target.value)}>
                 {hypothesisSets.map((set) => (
@@ -86,21 +79,22 @@ function App() {
 
       {mode === "guided" && (
         <>
+          <div className="toolbar">
+            <button
+              className="ghost"
+              onClick={() => dispatch({ type: "back" })}
+              disabled={state.trail.length <= 1}
+            >
+              Back
+            </button>
+            <button className="ghost" onClick={() => dispatch({ type: "reset" })}>
+              Restart
+            </button>
+          </div>
           <Breadcrumb
             crumbs={crumbs(state, knowledge)}
             onNavigate={(index) => dispatch({ type: "jump", index })}
           />
-
-          <div style={{ marginBottom: "1rem" }}>
-            <button
-              onClick={() => dispatch({ type: "back" })}
-              disabled={state.trail.length <= 1}
-              style={{ marginRight: "0.5rem" }}
-            >
-              Back
-            </button>
-            <button onClick={() => dispatch({ type: "reset" })}>Restart</button>
-          </div>
 
           {(node.type === "question" || node.type === "step") && (
             <QuestionCard node={node} onAnswer={goTo} />
@@ -112,17 +106,19 @@ function App() {
           {node.type === "terminal" && <TerminalCard node={node} />}
 
           {linkedSet && (
-            <div style={{ margin: "1rem 0", padding: "0.75rem", border: "1px solid #2563eb" }}>
-              <strong>Narrow it down</strong>
-              <p style={{ margin: "0.4rem 0" }}>
-                Enter what you find and the tool ranks the likely causes and proposes the next check.
+            <div className="callout">
+              <p>
+                <strong>Narrow it down.</strong> Enter what you find and the tool ranks the likely
+                causes and proposes the next check.
               </p>
-              <button onClick={() => openSet(linkedSet.meta.id)}>Analyze in hypothesis mode</button>
+              <button className="primary" onClick={() => openSet(linkedSet.meta.id)}>
+                Analyze in hypothesis mode
+              </button>
             </div>
           )}
         </>
       )}
-    </div>
+    </>
   );
 }
 

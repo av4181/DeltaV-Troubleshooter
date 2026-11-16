@@ -1,5 +1,6 @@
 import type { Node } from "../models/Node";
 import NodeMeta from "./NodeMeta";
+import Prose from "./Prose";
 
 type InfoNode = Extract<Node, { type: "info" }>;
 
@@ -10,11 +11,9 @@ interface Props {
 
 export default function InfoCard({ node, onContinue }: Props) {
   return (
-    <div>
+    <div className="card">
       <h2>{node.title}</h2>
-      <NodeMeta node={node} />
-      {node.description && <p>{node.description}</p>}
-
+      {node.description && <Prose text={node.description} limit={420} />}
       {node.actions && node.actions.length > 0 && (
         <ul>
           {node.actions.map((action) => (
@@ -22,10 +21,10 @@ export default function InfoCard({ node, onContinue }: Props) {
           ))}
         </ul>
       )}
-
-      <button onClick={() => onContinue(node.next)}>
+      <button className="primary" onClick={() => onContinue(node.next)}>
         {node.nextLabel ?? "Continue"}
       </button>
+      <NodeMeta node={node} />
     </div>
   );
 }

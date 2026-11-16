@@ -1,5 +1,6 @@
 import type { Node } from "../models/Node";
 import NodeMeta from "./NodeMeta";
+import Prose from "./Prose";
 
 type QuestionNode = Extract<Node, { type: "question" | "step" }>;
 
@@ -10,19 +11,18 @@ interface Props {
 
 export default function QuestionCard({ node, onAnswer }: Props) {
   return (
-    <div>
+    <div className="card">
       <h2>{node.title}</h2>
+      {node.description && <Prose text={node.description} />}
+      <div className="answers">
+        {node.answers.map((answer) => (
+          <button key={answer.label} className="answer" onClick={() => onAnswer(answer.next)}>
+            <span>{answer.label}</span>
+            {answer.sub && <span className="sub">{answer.sub}</span>}
+          </button>
+        ))}
+      </div>
       <NodeMeta node={node} />
-      {node.description && <p>{node.description}</p>}
-
-      {node.answers.map((answer) => (
-        <div key={answer.label} style={{ marginBottom: "0.75rem" }}>
-          <button onClick={() => onAnswer(answer.next)}>{answer.label}</button>
-          {answer.sub && (
-            <span style={{ marginLeft: "0.5rem", color: "#666" }}>{answer.sub}</span>
-          )}
-        </div>
-      ))}
     </div>
   );
 }
